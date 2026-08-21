@@ -135,7 +135,7 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
         return NO;
     }
     BOOL result = NO;
-    if (([action isEqualToString:@"startDownload"] || [action isEqualToString:@"updateConfiguration"] || [action isEqualToString:@"updateAppearanceSetting"] || [action isEqualToString:@"updateChatSetting"] || [action isEqualToString:@"updateProfileSetting"] || [action isEqualToString:@"setManagedFeature"]) && module.state != TiktigerFeatureModuleStateEnabled) {
+    if (([action isEqualToString:@"startDownload"] || [action isEqualToString:@"updateConfiguration"] || [action isEqualToString:@"updateAppearanceSetting"] || [action isEqualToString:@"updateChatSetting"] || [action isEqualToString:@"updateProfileSetting"] || [action isEqualToString:@"setManagedFeature"] || [action isEqualToString:@"importSystemBackup"] || [action isEqualToString:@"resetSystemConfiguration"]) && module.state != TiktigerFeatureModuleStateEnabled) {
         if (![module enable:error]) { return NO; }
     }
     if ([action isEqualToString:@"startDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
@@ -172,6 +172,11 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
     } else if ([action isEqualToString:@"setManagedFeature"] && [module isKindOfClass:[TiktigerSystemModule class]]) {
         NSString *managedFeatureID = [payload[@"managedFeatureID"] isKindOfClass:[NSString class]] ? payload[@"managedFeatureID"] : @"";
         result = [(TiktigerSystemModule *)module setManagedFeatureID:managedFeatureID enabled:[payload[@"enabled"] boolValue] error:error];
+    } else if ([action isEqualToString:@"importSystemBackup"] && [module isKindOfClass:[TiktigerSystemModule class]]) {
+        NSDictionary *backup = [payload[@"backup"] isKindOfClass:[NSDictionary class]] ? payload[@"backup"] : payload;
+        result = [(TiktigerSystemModule *)module importBackupPayload:backup error:error];
+    } else if ([action isEqualToString:@"resetSystemConfiguration"] && [module isKindOfClass:[TiktigerSystemModule class]]) {
+        result = [(TiktigerSystemModule *)module resetSystemConfiguration:error];
     } else if ([action isEqualToString:@"pauseDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
         result = [(TiktigerDownloadModule *)module pauseCurrent:error];
     } else if ([action isEqualToString:@"resumeDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
