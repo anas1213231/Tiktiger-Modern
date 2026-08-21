@@ -13,6 +13,7 @@
 #import "TiktigerAppearanceEngineView.h"
 #import "TiktigerChatCenterView.h"
 #import "TiktigerProfileCenterView.h"
+#import "TiktigerSystemCenterView.h"
 #import "TiktigerSettingsView.h"
 #import "TiktigerDeveloperCard.h"
 #import "TiktigerDashboardViewController.h"

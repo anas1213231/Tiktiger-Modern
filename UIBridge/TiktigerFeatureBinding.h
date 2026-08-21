@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSDictionary<NSString *, id> *)appearancePresentationState;
 - (NSDictionary<NSString *, id> *)chatPresentationState;
 - (NSDictionary<NSString *, id> *)profilePresentationState;
+- (NSDictionary<NSString *, id> *)systemPresentationState;
 - (NSURL * _Nullable)downloadHistoryFileURLForID:(NSString *)taskID error:(NSError * _Nullable * _Nullable)error;
 - (NSDictionary<NSString *, id> *)preferencesPresentation;
 
