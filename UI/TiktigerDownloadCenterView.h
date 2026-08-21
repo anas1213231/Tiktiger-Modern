@@ -12,9 +12,12 @@ typedef NS_ENUM(NSInteger, TiktigerDownloadPresentationState) {
     TiktigerDownloadPresentationStateFailed
 };
 
+typedef void (^TiktigerDownloadFileOpenHandler)(NSURL *fileURL);
+
 @interface TiktigerDownloadCenterView : UIView
 
 @property (nonatomic, assign) TiktigerDownloadPresentationState presentationState;
+@property (nonatomic, copy, nullable) TiktigerDownloadFileOpenHandler openFileHandler;
 @property (nonatomic, assign) CGFloat progress;
 
 - (void)showToastMessage:(NSString *)message state:(NSInteger)state;

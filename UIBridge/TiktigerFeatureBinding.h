@@ -8,6 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSDictionary<NSString *, NSArray<NSDictionary<NSString *, id> *> *> *)settingsFeatureControls;
 - (NSDictionary<NSString *, NSDictionary<NSString *, id> *> *)diagnosticsModuleHealth;
 - (NSDictionary<NSString *, id> *)downloadPresentationState;
+- (NSURL * _Nullable)downloadHistoryFileURLForID:(NSString *)taskID error:(NSError * _Nullable * _Nullable)error;
 - (NSDictionary<NSString *, id> *)preferencesPresentation;
 
 - (BOOL)setFeature:(NSString *)featureID enabled:(BOOL)enabled error:(NSError * _Nullable * _Nullable)error;

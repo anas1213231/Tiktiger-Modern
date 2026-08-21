@@ -61,6 +61,15 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
     return [download downloadSnapshot];
 }
 
+- (NSURL *)downloadHistoryFileURLForID:(NSString *)taskID error:(NSError **)error {
+    id<TiktigerFeatureModuleProtocol> module = [self.moduleManager.registry moduleWithID:@"media.download"];
+    if (![module isKindOfClass:[TiktigerDownloadModule class]]) {
+        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerFeatureBindingErrorDomain code:5 userInfo:@{NSLocalizedDescriptionKey: @"The Download Module is unavailable."}]; }
+        return nil;
+    }
+    return [(TiktigerDownloadModule *)module historyFileURLForID:taskID error:error];
+}
+
 - (NSDictionary<NSString *,id> *)preferencesPresentation {
     id<TiktigerFeatureModuleProtocol> module = [self.moduleManager.registry moduleWithID:@"user.preferences"];
     return [module respondsToSelector:@selector(preferencesSnapshot)] ? [(TiktigerPreferencesModule *)module preferencesSnapshot] : @{};
@@ -108,7 +117,10 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
     } else if ([action isEqualToString:@"completeDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
         result = [(TiktigerDownloadModule *)module completeCurrent:error];
     } else if ([action isEqualToString:@"retryDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
-        result = [(TiktigerDownloadModule *)module retryCurrent:error];
+        NSString *taskID = [payload[@"taskID"] isKindOfClass:[NSString class]] ? payload[@"taskID"] : nil;
+        result = taskID.length > 0 ? [(TiktigerDownloadModule *)module retryHistoryItemWithID:taskID error:error] : [(TiktigerDownloadModule *)module retryCurrent:error];
+    } else if ([action isEqualToString:@"deleteHistoryItem"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
+        result = [(TiktigerDownloadModule *)module deleteHistoryItemWithID:payload[@"taskID"] error:error];
     } else if ([action isEqualToString:@"pauseDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
         result = [(TiktigerDownloadModule *)module pauseCurrent:error];
     } else if ([action isEqualToString:@"resumeDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {

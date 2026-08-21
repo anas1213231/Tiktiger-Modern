@@ -32,6 +32,9 @@ typedef void (^TiktigerDownloadModuleEventHandler)(NSDictionary<NSString *, id> 
 - (BOOL)pauseCurrent:(NSError * _Nullable * _Nullable)error;
 - (BOOL)resumeCurrent:(NSError * _Nullable * _Nullable)error;
 - (BOOL)cancelCurrent:(NSError * _Nullable * _Nullable)error;
+- (BOOL)retryHistoryItemWithID:(NSString *)taskID error:(NSError * _Nullable * _Nullable)error;
+- (BOOL)deleteHistoryItemWithID:(NSString *)taskID error:(NSError * _Nullable * _Nullable)error;
+- (NSURL * _Nullable)historyFileURLForID:(NSString *)taskID error:(NSError * _Nullable * _Nullable)error;
 - (NSDictionary<NSString *, id> *)downloadSnapshot;
 - (void)setEventHandler:(TiktigerDownloadModuleEventHandler _Nullable)eventHandler;
 

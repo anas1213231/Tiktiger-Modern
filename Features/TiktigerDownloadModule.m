@@ -18,6 +18,7 @@ static NSUInteger const TiktigerDownloadHistoryLimit = 100;
 @property (nonatomic, strong) NSMutableArray<NSDictionary<NSString *, id> *> *errors;
 @property (nonatomic, strong) NSLock *downloadLock;
 @property (nonatomic, strong) TiktigerDownloadEngine *engine;
+@property (nonatomic, strong) TiktigerDownloadStorageManager *storageManager;
 @property (nonatomic, copy) TiktigerDownloadModuleEventHandler eventHandler;
 @end
 
@@ -296,6 +297,72 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
     return [self.engine cancelTaskWithID:taskID error:error];
 }
 
+- (BOOL)retryHistoryItemWithID:(NSString *)taskID error:(NSError **)error {
+    [self.downloadLock lock];
+    NSDictionary *historyItem = nil;
+    for (NSDictionary *item in self.history) {
+        if ([item[@"id"] isEqualToString:taskID]) { historyItem = item; break; }
+    }
+    NSString *sourceString = [historyItem[@"sourceURL"] isKindOfClass:[NSString class]] ? historyItem[@"sourceURL"] : nil;
+    NSString *mediaType = [historyItem[@"mediaType"] isKindOfClass:[NSString class]] ? historyItem[@"mediaType"] : @"video";
+    NSString *destination = [historyItem[@"destination"] isKindOfClass:[NSString class]] ? historyItem[@"destination"] : @"files";
+    BOOL failed = [historyItem[@"state"] isEqualToString:@"failed"];
+    [self.downloadLock unlock];
+    if (!failed || sourceString.length == 0) {
+        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:16 userInfo:@{NSLocalizedDescriptionKey: @"Only failed history items with a retained source URL can be retried."}]; }
+        return NO;
+    }
+    NSURL *sourceURL = [NSURL URLWithString:sourceString];
+    return [self enqueueMediaType:mediaType destination:destination sourceURL:sourceURL error:error];
+}
+
+- (BOOL)deleteHistoryItemWithID:(NSString *)taskID error:(NSError **)error {
+    [self.downloadLock lock];
+    NSDictionary *historyItem = nil;
+    NSUInteger historyIndex = NSNotFound;
+    for (NSUInteger index = 0; index < self.history.count; index += 1) {
+        NSDictionary *item = self.history[index];
+        if ([item[@"id"] isEqualToString:taskID]) { historyItem = item; historyIndex = index; break; }
+    }
+    [self.downloadLock unlock];
+    if (historyItem == nil || historyIndex == NSNotFound) {
+        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:17 userInfo:@{NSLocalizedDescriptionKey: @"The requested history item was not found."}]; }
+        return NO;
+    }
+    NSString *path = [historyItem[@"destinationURL"] isKindOfClass:[NSString class]] ? historyItem[@"destinationURL"] : nil;
+    if (path.length > 0) {
+        NSError *storageError = nil;
+        if (![self.storageManager removeFileAtURL:[NSURL fileURLWithPath:path] error:&storageError]) {
+            if (error != NULL) { *error = storageError; }
+            return NO;
+        }
+    }
+    [self.downloadLock lock];
+    if (historyIndex < self.history.count && [self.history[historyIndex][@"id"] isEqualToString:taskID]) { [self.history removeObjectAtIndex:historyIndex]; }
+    [self.downloadLock unlock];
+    [self emitSnapshotEvent];
+    return YES;
+}
+
+- (NSURL *)historyFileURLForID:(NSString *)taskID error:(NSError **)error {
+    [self.downloadLock lock];
+    NSString *path = nil;
+    for (NSDictionary *item in self.history) {
+        if ([item[@"id"] isEqualToString:taskID]) { path = [item[@"destinationURL"] isKindOfClass:[NSString class]] ? item[@"destinationURL"] : nil; break; }
+    }
+    [self.downloadLock unlock];
+    if (path.length == 0) {
+        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:18 userInfo:@{NSLocalizedDescriptionKey: @"The history item has no stored file URL."}]; }
+        return nil;
+    }
+    NSURL *fileURL = [NSURL fileURLWithPath:path];
+    if (![[NSFileManager defaultManager] fileExistsAtPath:fileURL.path]) {
+        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:19 userInfo:@{NSLocalizedDescriptionKey: @"The stored history file is no longer available."}]; }
+        return nil;
+    }
+    return fileURL;
+}
+
 - (NSDictionary<NSString *, id> *)downloadSnapshot {
     [self.downloadLock lock];
     NSDictionary *snapshot = @{
@@ -347,6 +414,9 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
     NSString *stateString = TiktigerStringFromDownloadState(moduleState);
     item[@"state"] = stateString;
     item[@"progress"] = @(progress);
+    NSDictionary *activeEngineItem = [self.engine.snapshot[@"activeTask"] isKindOfClass:[NSDictionary class]] ? self.engine.snapshot[@"activeTask"] : @{};
+    if (activeEngineItem[@"bytesWritten"] != nil) { item[@"bytesWritten"] = activeEngineItem[@"bytesWritten"]; }
+    if (activeEngineItem[@"totalBytesExpected"] != nil) { item[@"totalBytesExpected"] = activeEngineItem[@"totalBytesExpected"]; }
     self.currentItem = [item copy];
     self.progress = progress;
     self.downloadState = moduleState;
@@ -481,11 +551,11 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
 }
 
 - (TiktigerDownloadEngine *)makeEngine {
-    TiktigerDownloadStorageManager *storageManager = [[TiktigerDownloadStorageManager alloc] initWithRootDirectoryURL:nil];
+    if (self.storageManager == nil) { self.storageManager = [[TiktigerDownloadStorageManager alloc] initWithRootDirectoryURL:nil]; }
     TiktigerMediaProcessingLayer *processingLayer = [[TiktigerMediaProcessingLayer alloc] init];
     NSUInteger retryCount = [self.configuration[@"maxRetryCount"] unsignedIntegerValue];
     TiktigerDownloadRecoveryManager *recoveryManager = [[TiktigerDownloadRecoveryManager alloc] initWithMaximumRetryCount:retryCount > 0 ? retryCount : 3];
-    return [[TiktigerDownloadEngine alloc] initWithStorageManager:storageManager processingLayer:processingLayer recoveryManager:recoveryManager];
+    return [[TiktigerDownloadEngine alloc] initWithStorageManager:self.storageManager processingLayer:processingLayer recoveryManager:recoveryManager];
 }
 
 - (void)dealloc {
