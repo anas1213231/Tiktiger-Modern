@@ -5,6 +5,7 @@
 #import "TiktigerPrivacyModule.h"
 #import "TiktigerAppearanceModule.h"
 #import "TiktigerChatModule.h"
+#import "TiktigerProfileModule.h"
 #import "TiktigerFeatureModuleDescriptor.h"
 
 NSString * const TiktigerFeatureBindingEventDidChange = @"com.tiktiger.feature-binding.did-change";
@@ -79,6 +80,11 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
     return [module respondsToSelector:@selector(chatSnapshot)] ? [(TiktigerChatModule *)module chatSnapshot] : @{};
 }
 
+- (NSDictionary<NSString *,id> *)profilePresentationState {
+    id<TiktigerFeatureModuleProtocol> module = [self.moduleManager.registry moduleWithID:@"profile.center"];
+    return [module respondsToSelector:@selector(profileSnapshot)] ? [(TiktigerProfileModule *)module profileSnapshot] : @{};
+}
+
 - (NSURL *)downloadHistoryFileURLForID:(NSString *)taskID error:(NSError **)error {
     id<TiktigerFeatureModuleProtocol> module = [self.moduleManager.registry moduleWithID:@"media.download"];
     if (![module isKindOfClass:[TiktigerDownloadModule class]]) {
@@ -117,7 +123,7 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
         return NO;
     }
     BOOL result = NO;
-    if (([action isEqualToString:@"startDownload"] || [action isEqualToString:@"updateConfiguration"] || [action isEqualToString:@"updateAppearanceSetting"] || [action isEqualToString:@"updateChatSetting"]) && module.state != TiktigerFeatureModuleStateEnabled) {
+    if (([action isEqualToString:@"startDownload"] || [action isEqualToString:@"updateConfiguration"] || [action isEqualToString:@"updateAppearanceSetting"] || [action isEqualToString:@"updateChatSetting"] || [action isEqualToString:@"updateProfileSetting"]) && module.state != TiktigerFeatureModuleStateEnabled) {
         if (![module enable:error]) { return NO; }
     }
     if ([action isEqualToString:@"startDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
@@ -148,6 +154,9 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
     } else if ([action isEqualToString:@"updateChatSetting"] && [module isKindOfClass:[TiktigerChatModule class]]) {
         NSString *key = [payload[@"key"] isKindOfClass:[NSString class]] ? payload[@"key"] : @"";
         result = [(TiktigerChatModule *)module updateChatSetting:key value:payload[@"value"] ?: @NO error:error];
+    } else if ([action isEqualToString:@"updateProfileSetting"] && [module isKindOfClass:[TiktigerProfileModule class]]) {
+        NSString *key = [payload[@"key"] isKindOfClass:[NSString class]] ? payload[@"key"] : @"";
+        result = [(TiktigerProfileModule *)module updateProfileSetting:key value:payload[@"value"] ?: @NO error:error];
     } else if ([action isEqualToString:@"pauseDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
         result = [(TiktigerDownloadModule *)module pauseCurrent:error];
     } else if ([action isEqualToString:@"resumeDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
@@ -197,6 +206,7 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
         @"privacy": [self privacyPresentationState] ?: @{},
         @"appearance": [self appearancePresentationState] ?: @{},
         @"chat": [self chatPresentationState] ?: @{},
+        @"profile": [self profilePresentationState] ?: @{},
         @"preferences": [self preferencesPresentation] ?: @{},
         @"health": [self diagnosticsModuleHealth] ?: @{}
     };
