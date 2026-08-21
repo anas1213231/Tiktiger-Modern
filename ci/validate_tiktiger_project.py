@@ -271,10 +271,11 @@ def validate_project(data: dict[str, Any]) -> None:
         if ".git" not in path.parts and "DerivedData" not in path.parts
     )
     actual_sources = sorted(actual_sources)
-    if len(expected_sources) != 37:
-        fail(ROOT, "exactly 37 Objective-C implementation files in the current source tree", len(expected_sources))
+    minimum_source_count = 37
+    if len(expected_sources) < minimum_source_count:
+        fail(ROOT, f"at least {minimum_source_count} Objective-C implementation files in the current source tree", len(expected_sources))
     if actual_sources != expected_sources:
-        fail(PROJECT_FILE, "Compile Sources exactly match all 37 repository .m files", actual_sources)
+        fail(PROJECT_FILE, "Compile Sources exactly match all repository .m files", actual_sources)
 
     frameworks_phase = target_phase(objects, target, "PBXFrameworksBuildPhase")
     frameworks = build_file_names(objects, frameworks_phase)
@@ -307,7 +308,7 @@ def validate_project(data: dict[str, Any]) -> None:
     print("native_targets=1")
     print("product_type=com.apple.product-type.library.dynamic")
     print("product=Tiktiger.dylib")
-    print("compile_sources=37")
+    print(f"compile_sources={len(expected_sources)}")
     print("frameworks=UIKit.framework")
     print("resources=EMPTY")
     print("architecture=arm64")

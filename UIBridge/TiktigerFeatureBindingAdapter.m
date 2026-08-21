@@ -50,7 +50,15 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
 
 - (NSDictionary<NSString *,id> *)downloadPresentationState {
     id<TiktigerFeatureModuleProtocol> module = [self.moduleManager.registry moduleWithID:@"media.download"];
-    return [module respondsToSelector:@selector(downloadSnapshot)] ? [(TiktigerDownloadModule *)module downloadSnapshot] : @{};
+    if (![module respondsToSelector:@selector(downloadSnapshot)]) { return @{}; }
+    TiktigerDownloadModule *download = (TiktigerDownloadModule *)module;
+    __weak typeof(self) weakSelf = self;
+    [download setEventHandler:^(NSDictionary<NSString *,id> *snapshot) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (strongSelf != nil) { [strongSelf postModuleEventForFeatureID:@"media.download" action:@"engineEvent"]; }
+        (void)snapshot;
+    }];
+    return [download downloadSnapshot];
 }
 
 - (NSDictionary<NSString *,id> *)preferencesPresentation {
@@ -88,14 +96,25 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
     if ([action isEqualToString:@"startDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
         NSString *mediaType = payload[@"mediaType"] ?: @"video";
         NSString *destination = payload[@"destination"] ?: @"files";
-        result = [(TiktigerDownloadModule *)module enqueueMediaType:mediaType destination:destination error:error];
-        if (result) { result = [(TiktigerDownloadModule *)module prepareNext:error]; }
+        NSString *sourceString = [payload[@"sourceURL"] isKindOfClass:[NSString class]] ? payload[@"sourceURL"] : nil;
+        if (sourceString.length == 0) {
+            NSDictionary *configuration = [(TiktigerDownloadModule *)module configuration];
+            sourceString = [configuration[@"sourceURL"] isKindOfClass:[NSString class]] ? configuration[@"sourceURL"] : nil;
+        }
+        NSURL *sourceURL = sourceString.length > 0 ? [NSURL URLWithString:sourceString] : nil;
+        result = [(TiktigerDownloadModule *)module enqueueMediaType:mediaType destination:destination sourceURL:sourceURL error:error];
     } else if ([action isEqualToString:@"updateProgress"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
         result = [(TiktigerDownloadModule *)module updateProgress:[payload[@"progress"] doubleValue] error:error];
     } else if ([action isEqualToString:@"completeDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
         result = [(TiktigerDownloadModule *)module completeCurrent:error];
     } else if ([action isEqualToString:@"retryDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
         result = [(TiktigerDownloadModule *)module retryCurrent:error];
+    } else if ([action isEqualToString:@"pauseDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
+        result = [(TiktigerDownloadModule *)module pauseCurrent:error];
+    } else if ([action isEqualToString:@"resumeDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
+        result = [(TiktigerDownloadModule *)module resumeCurrent:error];
+    } else if ([action isEqualToString:@"cancelDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
+        result = [(TiktigerDownloadModule *)module cancelCurrent:error];
     } else if ([action isEqualToString:@"updateConfiguration"] && [module isKindOfClass:[TiktigerPreferencesModule class]]) {
         NSString *controlID = payload[@"controlID"] ?: @"";
         NSString *key = payload[@"key"] ?: @"";
