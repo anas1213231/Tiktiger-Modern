@@ -147,7 +147,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          DYNAMIC_LIBRARY_LIST="$(find "$DERIVED_DATA/Build/Products" -type f -name 'Tiktiger.dylib' -print | sort)"
+          DYNAMIC_LIBRARY_LIST="$(find "$DERIVED_DATA/Build/Products" -type f -name 'Tiktiger.dylib' ! -path '*.dSYM/*' -print | sort)"
           DYNAMIC_LIBRARY_COUNT="$(printf '%s\n' "$DYNAMIC_LIBRARY_LIST" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')"
           if [[ "$DYNAMIC_LIBRARY_COUNT" != '1' ]]; then
             echo 'VALIDATION_FAILED'
