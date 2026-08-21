@@ -5,8 +5,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 typedef NS_ENUM(NSInteger, TiktigerDownloadPresentationState) {
     TiktigerDownloadPresentationStateIdle = 0,
-    TiktigerDownloadPresentationStateLoading,
-    TiktigerDownloadPresentationStateSuccess,
+    TiktigerDownloadPresentationStatePreparing,
+    TiktigerDownloadPresentationStateDownloading,
+    TiktigerDownloadPresentationStateProcessing,
+    TiktigerDownloadPresentationStateCompleted,
     TiktigerDownloadPresentationStateFailed
 };
 

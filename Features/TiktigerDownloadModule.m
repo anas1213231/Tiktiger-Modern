@@ -1,6 +1,7 @@
 #import "TiktigerDownloadModule.h"
 
 static NSString * const TiktigerDownloadModuleErrorDomain = @"com.tiktiger.download-module";
+static NSUInteger const TiktigerDownloadHistoryLimit = 100;
 
 @interface TiktigerDownloadModule ()
 @property (nonatomic, assign, readwrite) TiktigerDownloadState downloadState;
@@ -8,6 +9,7 @@ static NSString * const TiktigerDownloadModuleErrorDomain = @"com.tiktiger.downl
 @property (nonatomic, copy, readwrite) NSDictionary<NSString *, id> *queueState;
 @property (nonatomic, copy, readwrite) NSDictionary<NSString *, id> *lastError;
 @property (nonatomic, strong) NSMutableArray<NSDictionary<NSString *, id> *> *queue;
+@property (nonatomic, strong) NSMutableArray<NSDictionary<NSString *, id> *> *history;
 @property (nonatomic, strong) NSDictionary<NSString *, id> *currentItem;
 @property (nonatomic, strong) NSMutableArray<NSDictionary<NSString *, id> *> *errors;
 @property (nonatomic, strong) NSLock *downloadLock;
@@ -31,11 +33,12 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
     self = [super initWithFeatureID:featureID name:name version:version configuration:configuration uiRepresentation:uiRepresentation];
     if (self) {
         _queue = [[NSMutableArray alloc] init];
+        _history = [[NSMutableArray alloc] init];
         _errors = [[NSMutableArray alloc] init];
         _downloadLock = [[NSLock alloc] init];
         _downloadState = TiktigerDownloadStateIdle;
         _progress = 0.0;
-        _queueState = @{ @"queued": @0, @"completed": @0, @"active": @NO };
+        _queueState = @{ @"queued": @0, @"completed": @0, @"active": @NO, @"state": @"idle", @"items": @[] };
         _lastError = @{};
     }
     return self;
@@ -86,6 +89,7 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
     if (self.queue.count == 0) {
         if (error != NULL) { *error = [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:4 userInfo:@{NSLocalizedDescriptionKey: @"No queued download is available."}]; }
         self.downloadState = TiktigerDownloadStateFailed;
+        [self refreshQueueState];
         [self.downloadLock unlock];
         return NO;
     }
@@ -119,11 +123,16 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
         return NO;
     }
     NSUInteger completed = [self.queueState[@"completed"] unsignedIntegerValue] + 1;
+    NSMutableDictionary *historyItem = [self.currentItem mutableCopy];
+    historyItem[@"state"] = @"completed";
+    historyItem[@"progress"] = @1.0;
+    historyItem[@"finishedAt"] = @([[NSDate date] timeIntervalSince1970]);
+    [self appendHistoryItem:historyItem];
     self.progress = 1.0;
     self.downloadState = TiktigerDownloadStateCompleted;
     [self.queue removeObjectAtIndex:0];
     self.currentItem = nil;
-    self.queueState = @{ @"queued": @(self.queue.count), @"completed": @(completed), @"active": @NO, @"state": TiktigerStringFromDownloadState(self.downloadState) };
+    self.queueState = @{ @"queued": @(self.queue.count), @"completed": @(completed), @"active": @NO, @"state": TiktigerStringFromDownloadState(self.downloadState), @"items": [self.queue copy] };
     [self.downloadLock unlock];
     return YES;
 }
@@ -149,17 +158,29 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
     NSError *safeError = error ?: [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:7 userInfo:@{NSLocalizedDescriptionKey: @"Unknown download failure."}];
     self.downloadState = TiktigerDownloadStateFailed;
     self.lastError = @{ @"domain": safeError.domain ?: @"", @"code": @(safeError.code), @"message": safeError.localizedDescription ?: @"" };
+    if (self.currentItem != nil) {
+        NSMutableDictionary *historyItem = [self.currentItem mutableCopy];
+        historyItem[@"state"] = @"failed";
+        historyItem[@"progress"] = @(self.progress);
+        historyItem[@"error"] = self.lastError;
+        historyItem[@"finishedAt"] = @([[NSDate date] timeIntervalSince1970]);
+        [self appendHistoryItem:historyItem];
+    }
     [self.errors addObject:self.lastError];
     [self refreshQueueState];
     [self.downloadLock unlock];
     return YES;
 }
 
+- (void)appendHistoryItem:(NSDictionary<NSString *, id> *)item {
+    if (item == nil) { return; }
+    [self.history addObject:[item copy]];
+    while (self.history.count > TiktigerDownloadHistoryLimit) { [self.history removeObjectAtIndex:0]; }
+}
+
 - (void)refreshQueueState {
-    NSUInteger completed = 0;
-    NSNumber *completedValue = self.queueState[@"completed"];
-    completed = completedValue.unsignedIntegerValue;
-    self.queueState = @{ @"queued": @(self.queue.count), @"completed": @(completed), @"active": @(self.currentItem != nil), @"state": TiktigerStringFromDownloadState(self.downloadState) };
+    NSUInteger completed = [self.queueState[@"completed"] unsignedIntegerValue];
+    self.queueState = @{ @"queued": @(self.queue.count), @"completed": @(completed), @"active": @(self.currentItem != nil), @"state": TiktigerStringFromDownloadState(self.downloadState), @"items": [self.queue copy] };
 }
 
 - (NSDictionary<NSString *,id> *)downloadSnapshot {
@@ -171,7 +192,11 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
         @"state": TiktigerStringFromDownloadState(self.downloadState),
         @"progress": @(self.progress),
         @"queue": self.queueState ?: @{},
-        @"lastError": self.lastError ?: @{}
+        @"currentItem": self.currentItem ?: @{},
+        @"history": [self.history copy],
+        @"configuration": self.configuration ?: @{},
+        @"lastError": self.lastError ?: @{},
+        @"engineState": @"foundation-only"
     };
     [self.downloadLock unlock];
     return snapshot;
@@ -179,10 +204,12 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
 
 - (NSDictionary<NSString *,id> *)healthCheck {
     [self.downloadLock lock];
-    NSDictionary *snapshot = @{ @"featureID": self.featureID ?: @"", @"name": self.name ?: @"", @"version": self.version ?: @"", @"state": TiktigerStringFromDownloadState(self.downloadState), @"progress": @(self.progress), @"queue": self.queueState ?: @{}, @"lastError": self.lastError ?: @{} };
+    NSDictionary *snapshot = @{ @"featureID": self.featureID ?: @"", @"name": self.name ?: @"", @"version": self.version ?: @"", @"state": TiktigerStringFromDownloadState(self.downloadState), @"progress": @(self.progress), @"queue": self.queueState ?: @{}, @"currentItem": self.currentItem ?: @{}, @"lastError": self.lastError ?: @{} };
     NSMutableDictionary *health = [snapshot mutableCopy];
     health[@"healthy"] = @(self.downloadState != TiktigerDownloadStateFailed);
     health[@"errorCount"] = @(self.errors.count);
+    health[@"historyCount"] = @(self.history.count);
+    health[@"engineState"] = @"foundation-only";
     health[@"configurationState"] = self.configuration[@"schemaVersion"] ? @"valid" : @"fallback";
     [self.downloadLock unlock];
     return [health copy];
