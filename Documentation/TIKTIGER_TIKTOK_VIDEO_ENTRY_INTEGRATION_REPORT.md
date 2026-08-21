@@ -10,7 +10,7 @@ The dylib does not create or inject a TikTok button, execute a view-controller p
 
 ## Source and Scope
 
-The Phase 25 source commit is `d74692b18c1214d5217b881207c050e229e10a65`, based on the Phase 24 report commit `5c71c4fe6bd538c49779604969dac50e8f4560c1`. The change set is limited to the existing TikTok Integration Bridge and Integration Diagnostics contracts. No Core, feature module, UI module, UIBridge navigation contract, or GitHub Actions workflow was modified.
+The Phase 25 source commit is `d74692b18c1214d5217b881207c050e229e10a65`, based on the Phase 24 report commit `5c71c4fe6bd538c49779604969dac50e8f4560c1`. The Phase 25 report commit is `e20b1e271b38fb9557449c67a146f8d416635dc7`. The change set is limited to the existing TikTok Integration Bridge and Integration Diagnostics contracts. No Core, feature module, UI module, UIBridge navigation contract, or GitHub Actions workflow was modified.
 
 The implementation is deliberately limited to `video.action`. Existing Phase 24 contracts for `share.menu` and `profile.settings` remain unchanged and are not routed through the new Phase 25 lifecycle methods.
 
@@ -105,7 +105,7 @@ The Phase 25 static audit passed after separating exact safety-value checks from
 
 ## GitHub Actions Build Verification
 
-GitHub Actions run `32535198371` completed successfully for commit `d74692b18c1214d5217b881207c050e229e10a65` on macOS. The runner used Xcode `26.6` with the `Tiktiger` scheme, `Release` configuration, `iphoneos` SDK, and `arm64` architecture.
+GitHub Actions run `32535198371` completed successfully for the Phase 25 source commit `d74692b18c1214d5217b881207c050e229e10a65` on macOS. The runner used Xcode `26.6` with the `Tiktiger` scheme, `Release` configuration, `iphoneos` SDK, and `arm64` architecture. After publishing this report, final remote HEAD validation run `32535389836` also completed successfully for report commit `e20b1e271b38fb9557449c67a146f8d416635dc7`; it produced the same Dylib SHA-256 and passed the same project, Mach-O, and artifact checks.
 
 | CI validation | Result |
 |---|---|
@@ -142,7 +142,7 @@ The CI Mach-O validation also confirmed the expected install name and the existi
 
 ## Final Repository State
 
-Local and remote `main` both point to `d74692b18c1214d5217b881207c050e229e10a65`. Tracked and staged diffs are clean after the Phase 25 source commit. Pre-existing untracked documentation files from earlier phases remain outside the Phase 25 change set and were not modified or included.
+Local and remote `main` both point to the final report commit `e20b1e271b38fb9557449c67a146f8d416635dc7`; the Phase 25 source implementation is preserved at `d74692b18c1214d5217b881207c050e229e10a65`. Tracked and staged diffs are clean after the report commit. Pre-existing untracked documentation files from earlier phases remain outside the Phase 25 change set and were not modified or included.
 
 > **VIDEO ENTRY INTEGRATION = VERIFIED**
 >
