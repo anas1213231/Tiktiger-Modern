@@ -25,46 +25,109 @@ jobs:
       CONFIGURATION: Release
       DERIVED_DATA: ${{ github.workspace }}/DerivedData
       EXPECTED_INSTALL_NAME: '@rpath/Tiktiger.dylib'
+      REPORT: ${{ github.workspace }}/TIKTIGER_GITHUB_BUILD_REPORT.md
+      XCODE_LIST_LOG: ${{ github.workspace }}/xcodebuild-list.log
+      VALIDATION_LOG: ${{ github.workspace }}/validation.log
+      BUILD_LOG: ${{ github.workspace }}/build.log
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - name: Select Xcode
         shell: bash
         run: |
           set -euo pipefail
-          echo "Available Xcode installations:"
-          ls -1d /Applications/Xcode*.app 2>/dev/null || true
           if [[ -n "${XCODE_VERSION:-}" ]]; then
-            sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app"
+            XCODE_PATH="/Applications/Xcode_${XCODE_VERSION}.app"
+            if [[ ! -d "$XCODE_PATH" ]]; then
+              echo "VALIDATION_FAILED"
+              echo "path=$XCODE_PATH"
+              echo "expected=installed Xcode application for XCODE_VERSION=$XCODE_VERSION"
+              echo "detected=missing"
+              exit 1
+            fi
+          elif [[ -d "/Applications/Xcode.app" ]]; then
+            XCODE_PATH="/Applications/Xcode.app"
           else
-            sudo xcode-select -s /Applications/Xcode.app
+            XCODE_PATH="$(find /Applications -maxdepth 1 -type d -name 'Xcode*.app' -print | LC_ALL=C sort | tail -n 1)"
+            if [[ -z "$XCODE_PATH" ]]; then
+              echo "VALIDATION_FAILED"
+              echo "path=/Applications"
+              echo "expected=at least one Xcode*.app installation"
+              echo "detected=none"
+              exit 1
+            fi
           fi
-          xcode-select -p
+          if [[ ! -d "$XCODE_PATH/Contents/Developer" ]]; then
+            echo "VALIDATION_FAILED"
+            echo "path=$XCODE_PATH/Contents/Developer"
+            echo "expected=Xcode Developer directory"
+            echo "detected=missing"
+            exit 1
+          fi
+          sudo xcode-select --switch "$XCODE_PATH/Contents/Developer"
+          echo "Selected Xcode: $XCODE_PATH"
+          echo "Developer directory: $(xcode-select -p)"
           xcodebuild -version
 
-      - name: Validate project structure
+      - name: Initialize CI report
         shell: bash
         run: |
           set -euo pipefail
-          test -f "$PROJECT/project.pbxproj"
-          test -f "$PROJECT/xcshareddata/xcschemes/Tiktiger.xcscheme"
-          test -f Public/Tiktiger.h
-          test -f Public/TiktigerExportedSymbols.txt
-          grep -q 'com.apple.product-type.library.dynamic' "$PROJECT/project.pbxproj"
-          grep -q 'PRODUCT_NAME = Tiktiger;' "$PROJECT/project.pbxproj"
-          grep -q 'EXECUTABLE_SUFFIX = .dylib;' "$PROJECT/project.pbxproj"
-          grep -q 'MACH_O_TYPE = mh_dylib;' "$PROJECT/project.pbxproj"
-          grep -q 'LD_DYLIB_INSTALL_NAME = @rpath/Tiktiger.dylib;' "$PROJECT/project.pbxproj"
-          grep -q 'ARCHS = arm64;' "$PROJECT/project.pbxproj"
-          grep -q 'IPHONEOS_DEPLOYMENT_TARGET = 14.0;' "$PROJECT/project.pbxproj"
-          grep -q 'UIKit.framework' "$PROJECT/project.pbxproj"
+          {
+            echo '# Tiktiger GitHub Build Report'
+            echo
+            echo "- Workflow run: $GITHUB_RUN_ID"
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Runner: $RUNNER_OS"
+            echo "- Project: $PROJECT"
+            echo "- Scheme: $SCHEME"
+            echo "- Configuration: $CONFIGURATION"
+            echo "- SDK: iphoneos"
+            echo "- Architecture: arm64"
+            echo
+            echo '## Xcode'
+            echo
+            xcodebuild -version
+            echo
+          } > "$REPORT"
+
+      - name: Run xcodebuild -list before build
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! xcodebuild -list -project "$PROJECT" > "$XCODE_LIST_LOG" 2>&1; then
+            echo 'VALIDATION_FAILED'
+            echo "path=$PROJECT"
+            echo 'expected=xcodebuild -list succeeds and Xcode can parse the project'
+            echo 'detected=xcodebuild -list failed'
+            cat "$XCODE_LIST_LOG"
+            exit 1
+          fi
+          {
+            echo '## Xcode project discovery'
+            echo
+            echo '```text'
+            cat "$XCODE_LIST_LOG"
+            echo '```'
+            echo
+          } >> "$REPORT"
+          cat "$XCODE_LIST_LOG"
+
+      - name: Validate project structure with Xcode-parsed data
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/validate_tiktiger_project.py 2>&1 | tee "$VALIDATION_LOG" | tee -a "$REPORT"
 
       - name: Build Release Dynamic Library
         shell: bash
         run: |
-          set -euo pipefail
+          set -o pipefail
+          mkdir -p "$DERIVED_DATA"
           xcodebuild \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
@@ -73,16 +136,30 @@ jobs:
             -arch arm64 \
             -derivedDataPath "$DERIVED_DATA" \
             ONLY_ACTIVE_ARCH=NO \
-            clean build
+            clean build 2>&1 | tee "$BUILD_LOG"
 
       - name: Locate Tiktiger.dylib
         id: locate
         shell: bash
         run: |
           set -euo pipefail
-          DYNAMIC_LIBRARY="$(find "$DERIVED_DATA/Build/Products" -type f -name 'Tiktiger.dylib' -print -quit)"
-          test -n "$DYNAMIC_LIBRARY"
-          test -f "$DYNAMIC_LIBRARY"
+          DYNAMIC_LIBRARY_LIST="$(find "$DERIVED_DATA/Build/Products" -type f -name 'Tiktiger.dylib' -print | sort)"
+          DYNAMIC_LIBRARY_COUNT="$(printf '%s\n' "$DYNAMIC_LIBRARY_LIST" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')"
+          if [[ "$DYNAMIC_LIBRARY_COUNT" != '1' ]]; then
+            echo 'VALIDATION_FAILED'
+            echo "path=$DERIVED_DATA/Build/Products"
+            echo 'expected=exactly one Tiktiger.dylib product'
+            echo "detected=count=$DYNAMIC_LIBRARY_COUNT paths=$DYNAMIC_LIBRARY_LIST"
+            exit 1
+          fi
+          DYNAMIC_LIBRARY="$(printf '%s\n' "$DYNAMIC_LIBRARY_LIST" | sed '/^[[:space:]]*$/d' | head -n 1)"
+          if [[ ! -f "$DYNAMIC_LIBRARY" ]]; then
+            echo 'VALIDATION_FAILED'
+            echo "path=$DYNAMIC_LIBRARY"
+            echo 'expected=regular file'
+            echo 'detected=missing'
+            exit 1
+          fi
           echo "path=$DYNAMIC_LIBRARY" >> "$GITHUB_OUTPUT"
           echo "Tiktiger.dylib located at: $DYNAMIC_LIBRARY"
 
@@ -92,65 +169,83 @@ jobs:
           DYNAMIC_LIBRARY: ${{ steps.locate.outputs.path }}
         run: |
           set -euo pipefail
-          REPORT="${{ github.workspace }}/TIKTIGER_GITHUB_BUILD_REPORT.md"
-          : > "$REPORT"
+          FILE_OUTPUT="$(file "$DYNAMIC_LIBRARY")"
+          OTOOL_L_OUTPUT="$(otool -L "$DYNAMIC_LIBRARY")"
+          OTOOL_D_OUTPUT="$(otool -D "$DYNAMIC_LIBRARY")"
+          NM_OUTPUT="$(nm -gU "$DYNAMIC_LIBRARY")"
           {
-            echo '# Tiktiger GitHub Build Report'
-            echo
-            echo "- Workflow run: $GITHUB_RUN_ID"
-            echo "- Runner: $RUNNER_OS"
-            echo "- Xcode: $(xcodebuild -version | tr '\\n' ' ')"
-            echo "- Project: $PROJECT"
-            echo "- Scheme: $SCHEME"
-            echo "- Configuration: $CONFIGURATION"
-            echo "- Artifact path: $DYNAMIC_LIBRARY"
-            echo
             echo '## Build result'
             echo
             echo 'Release build completed successfully on the macOS runner.'
             echo
-            echo '## Validation output'
+            echo "- Artifact path: $DYNAMIC_LIBRARY"
+            echo
+            echo '## Mach-O validation output'
             echo
             echo '### file'
             echo '```text'
-            file "$DYNAMIC_LIBRARY"
+            echo "$FILE_OUTPUT"
             echo '```'
             echo
             echo '### otool -L'
             echo '```text'
-            otool -L "$DYNAMIC_LIBRARY"
+            echo "$OTOOL_L_OUTPUT"
             echo '```'
             echo
             echo '### otool -D'
             echo '```text'
-            otool -D "$DYNAMIC_LIBRARY"
+            echo "$OTOOL_D_OUTPUT"
             echo '```'
             echo
-            echo '### nm'
+            echo '### nm -gU'
             echo '```text'
-            nm -gU "$DYNAMIC_LIBRARY"
+            echo "$NM_OUTPUT"
             echo '```'
           } >> "$REPORT"
 
-          file "$DYNAMIC_LIBRARY" | grep -Eq 'Mach-O.*dynamically linked shared library.*arm64|Mach-O.*arm64'
-          INSTALL_NAME="$(otool -D "$DYNAMIC_LIBRARY" | tail -n 1 | tr -d '\\r')"
-          test "$INSTALL_NAME" = "$EXPECTED_INSTALL_NAME"
+          if ! printf '%s\n' "$FILE_OUTPUT" | grep -Eq 'Mach-O.*(dynamically linked shared library|dynamic library).*arm64'; then
+            echo 'VALIDATION_FAILED'
+            echo "path=$DYNAMIC_LIBRARY"
+            echo 'expected=Mach-O dynamically linked shared library with arm64 architecture'
+            echo "detected=$FILE_OUTPUT"
+            exit 1
+          fi
+
+          INSTALL_NAME="$(printf '%s\n' "$OTOOL_D_OUTPUT" | tail -n 1 | tr -d '\r' | sed 's/^[[:space:]]*//')"
+          if [[ "$INSTALL_NAME" != "$EXPECTED_INSTALL_NAME" ]]; then
+            echo 'VALIDATION_FAILED'
+            echo "path=$DYNAMIC_LIBRARY"
+            echo "expected=$EXPECTED_INSTALL_NAME"
+            echo "detected=$INSTALL_NAME"
+            exit 1
+          fi
 
           for symbol in \
             _TiktigerInitialize \
             _TiktigerGetVersion \
             _TiktigerGetStatus \
             _TiktigerShutdown; do
-            nm -gU "$DYNAMIC_LIBRARY" | awk '{print $NF}' | grep -qx "$symbol"
+            if ! printf '%s\n' "$NM_OUTPUT" | awk '{print $NF}' | grep -Fxq "$symbol"; then
+              echo 'VALIDATION_FAILED'
+              echo "path=$DYNAMIC_LIBRARY"
+              echo "expected=exported symbol $symbol"
+              echo "detected=$(printf '%s\n' "$NM_OUTPUT" | awk '{print $NF}' | sort -u | tr '\n' ' ')"
+              exit 1
+            fi
           done
 
-          if find "$DERIVED_DATA/Build/Products" -type f \( -name '*.ipa' -o -name '*.framework' \) -print -quit | grep -q .; then
-            echo 'Forbidden IPA or framework artifact found.' >&2
+          FORBIDDEN_OUTPUT="$(find "$DERIVED_DATA/Build/Products" -type f \( -name '*.ipa' -o -name '*.framework' \) -print | sort)"
+          if [[ -n "$FORBIDDEN_OUTPUT" ]]; then
+            echo 'VALIDATION_FAILED'
+            echo "path=$DERIVED_DATA/Build/Products"
+            echo 'expected=no IPA or framework artifacts'
+            echo "detected=$FORBIDDEN_OUTPUT"
             exit 1
           fi
-          echo 'Mach-O architecture, install name, and required exports validated.'
+          echo 'Mach-O architecture, install name, exports, and artifact hygiene validated.'
 
       - name: Upload Tiktiger.dylib artifact
+        if: success()
         uses: actions/upload-artifact@v7
         with:
           name: Tiktiger-dylib-release
@@ -158,4 +253,17 @@ jobs:
             ${{ steps.locate.outputs.path }}
             TIKTIGER_GITHUB_BUILD_REPORT.md
           if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload CI diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tiktiger-ci-failure-${{ github.run_id }}
+          path: |
+            xcodebuild-list.log
+            validation.log
+            build.log
+            TIKTIGER_GITHUB_BUILD_REPORT.md
+          if-no-files-found: ignore
           retention-days: 14
