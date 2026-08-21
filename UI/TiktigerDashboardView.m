@@ -274,7 +274,7 @@
         NSString *moduleID = definition[@"id"];
         NSDictionary *liveCard = [self liveCardForModuleID:moduleID];
         BOOL available = (liveCard != nil && self.navigationHandler != nil);
-        NSString *detail = liveCard != nil ? [NSString stringWithFormat:@"%@ · %@", liveCard[@"state"] ?: @"registered", available ? @"Open module" : @"Navigation pending"] : @"Planned · no feature action"];
+        NSString *detail = liveCard != nil ? [NSString stringWithFormat:@"%@ · %@", liveCard[@"state"] ?: @"registered", available ? @"Open module" : @"Navigation pending"] : @"Planned · no feature action";
         TiktigerGlassRow *row = [[TiktigerGlassRow alloc] initWithTitle:definition[@"title"] detail:detail systemImageName:definition[@"icon"]];
         row.showsDisclosure = YES;
         row.enabled = available;
