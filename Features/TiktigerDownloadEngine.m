@@ -5,6 +5,18 @@
 
 static NSString * const TiktigerDownloadEngineErrorDomain = @"com.tiktiger.download-engine";
 
+NSString *TiktigerStringFromDownloadEngineState(TiktigerDownloadEngineState state) {
+    switch (state) {
+        case TiktigerDownloadEngineStateIdle: return @"idle";
+        case TiktigerDownloadEngineStatePreparing: return @"preparing";
+        case TiktigerDownloadEngineStateDownloading: return @"downloading";
+        case TiktigerDownloadEngineStateProcessing: return @"processing";
+        case TiktigerDownloadEngineStateCompleted: return @"completed";
+        case TiktigerDownloadEngineStateFailed: return @"failed";
+    }
+    return @"unknown";
+}
+
 typedef NS_ENUM(NSInteger, TiktigerDownloadTaskControlState) {
     TiktigerDownloadTaskControlStateQueued = 0,
     TiktigerDownloadTaskControlStateActive,
