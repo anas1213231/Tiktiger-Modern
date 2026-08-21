@@ -47,6 +47,7 @@ static NSString * const TiktigerDownloadRecoveryErrorDomain = @"com.tiktiger.dow
 - (NSDictionary<NSString *,id> *)recordFailureForTask:(NSDictionary<NSString *,id> *)task error:(NSError *)error {
     NSString *taskID = task[@"id"] ?: @"unknown";
     NSError *safeError = error ?: [self recoveryErrorWithCode:4 description:@"Unknown download failure."];
+    NSNumber *bytesWritten = [task[@"bytesWritten"] isKindOfClass:[NSNumber class]] ? task[@"bytesWritten"] : @0;
     [self.recoveryLock lock];
     self.totalFailures += 1;
     NSUInteger retryCount = self.retryCounts[taskID].unsignedIntegerValue;
@@ -56,7 +57,7 @@ static NSString * const TiktigerDownloadRecoveryErrorDomain = @"com.tiktiger.dow
         @"domain": safeError.domain ?: @"",
         @"code": @(safeError.code),
         @"message": safeError.localizedDescription ?: @"",
-        @"resumable": @(task[@"bytesWritten"].unsignedLongLongValue > 0)
+        @"resumable": @(bytesWritten.unsignedLongLongValue > 0)
     };
     [self.recoveryLock unlock];
     return record;
@@ -64,11 +65,12 @@ static NSString * const TiktigerDownloadRecoveryErrorDomain = @"com.tiktiger.dow
 
 - (NSDictionary<NSString *,id> *)recordRetryForTask:(NSDictionary<NSString *,id> *)task {
     NSString *taskID = task[@"id"] ?: @"unknown";
+    NSNumber *bytesWritten = [task[@"bytesWritten"] isKindOfClass:[NSNumber class]] ? task[@"bytesWritten"] : @0;
     [self.recoveryLock lock];
     NSUInteger retryCount = self.retryCounts[taskID].unsignedIntegerValue + 1;
     self.retryCounts[taskID] = @(retryCount);
     self.totalRetries += 1;
-    NSDictionary *record = @{ @"taskID": taskID, @"retryCount": @(retryCount), @"resumed": @(task[@"bytesWritten"].unsignedLongLongValue > 0) };
+    NSDictionary *record = @{ @"taskID": taskID, @"retryCount": @(retryCount), @"resumed": @(bytesWritten.unsignedLongLongValue > 0) };
     [self.recoveryLock unlock];
     return record;
 }

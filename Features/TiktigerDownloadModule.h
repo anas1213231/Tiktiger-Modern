@@ -22,7 +22,7 @@ typedef void (^TiktigerDownloadModuleEventHandler)(NSDictionary<NSString *, id> 
 @property (nonatomic, copy, readonly) NSDictionary<NSString *, id> *queueState;
 @property (nonatomic, copy, readonly) NSDictionary<NSString *, id> *lastError;
 
-- (BOOL)enqueueMediaType:(NSString *)mediaType destination:(NSString *)destination sourceURL:(NSString * _Nullable)sourceURL error:(NSError * _Nullable * _Nullable)error;
+- (BOOL)enqueueMediaType:(NSString *)mediaType destination:(NSString *)destination sourceURL:(NSURL * _Nullable)sourceURL error:(NSError * _Nullable * _Nullable)error;
 - (BOOL)enqueueMediaType:(NSString *)mediaType destination:(NSString *)destination error:(NSError * _Nullable * _Nullable)error;
 - (BOOL)prepareNext:(NSError * _Nullable * _Nullable)error;
 - (BOOL)updateProgress:(double)progress error:(NSError * _Nullable * _Nullable)error;

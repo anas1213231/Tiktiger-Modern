@@ -86,7 +86,7 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
     return [self enqueueMediaType:mediaType destination:destination sourceURL:sourceURL error:error];
 }
 
-- (BOOL)enqueueMediaType:(NSString *)mediaType destination:(NSString *)destination sourceURL:(NSString *)sourceURL error:(NSError **)error {
+- (BOOL)enqueueMediaType:(NSString *)mediaType destination:(NSString *)destination sourceURL:(NSURL *)sourceURL error:(NSError **)error {
     NSError *validationError = nil;
     if (![self validateMediaType:mediaType destination:destination error:&validationError]) {
         if (error != NULL) { *error = validationError; }
