@@ -2,7 +2,7 @@
 #import "TiktigerLifecycleManager.h"
 #import "TiktigerDiagnosticsManager.h"
 
-NSString * const TiktigerVersion = @"0.1.0-foundation";
+NSString * const TiktigerVersion = @"1.0.0";
 
 static TiktigerLifecycleManager *TiktigerSharedLifecycle(void) {
     static TiktigerLifecycleManager *manager;
