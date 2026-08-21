@@ -239,7 +239,7 @@
     NSUInteger liveCount = 0;
     for (NSDictionary *definition in definitions) {
         NSString *moduleID = definition[@"id"];
-        NSDictionary *liveCard = [self liveCardForModuleID:moduleID];
+        NSDictionary<NSString *, id> * _Nullable liveCard = [self liveCardForModuleID:moduleID];
         BOOL isLive = (liveCard != nil);
         if (isLive) { liveCount += 1; }
         NSString *state = liveCard[@"state"] ?: @"planned";
@@ -260,6 +260,10 @@
         ? [NSString stringWithFormat:@"%lu live module(s) · %lu VIP centers planned", (unsigned long)liveCount, (unsigned long)definitions.count]
         : [NSString stringWithFormat:@"%lu VIP centers planned · module binding pending", (unsigned long)definitions.count];
     [self.moduleHubCard setStatusMessage:hubStatus];
+    if (self.moduleStatusCard != nil && self.moduleStatusCard.superview != self.moduleHubCard.contentView) {
+        [self.moduleStatusCard removeFromSuperview];
+        [self.moduleCardsStack addArrangedSubview:self.moduleStatusCard];
+    }
 }
 
 - (void)rebuildQuickActions {
@@ -272,7 +276,7 @@
     NSArray *definitions = [self plannedModuleDefinitions];
     for (NSDictionary *definition in definitions) {
         NSString *moduleID = definition[@"id"];
-        NSDictionary *liveCard = [self liveCardForModuleID:moduleID];
+        NSDictionary<NSString *, id> * _Nullable liveCard = [self liveCardForModuleID:moduleID];
         BOOL available = (liveCard != nil && self.navigationHandler != nil);
         NSString *detail = liveCard != nil ? [NSString stringWithFormat:@"%@ · %@", liveCard[@"state"] ?: @"registered", available ? @"Open module" : @"Navigation pending"] : @"Planned · no feature action";
         TiktigerGlassRow *row = [[TiktigerGlassRow alloc] initWithTitle:definition[@"title"] detail:detail systemImageName:definition[@"icon"]];
