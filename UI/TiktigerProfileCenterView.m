@@ -14,15 +14,19 @@ static NSString * const TiktigerProfileFeatureID = @"profile.center";
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIStackView *contentStack;
 @property (nonatomic, strong) TiktigerGlassCard *statusCard;
+@property (nonatomic, strong) TiktigerGlassCard *creatorCard;
 @property (nonatomic, strong) TiktigerGlassCard *featureCard;
 @property (nonatomic, strong) TiktigerGlassCard *settingsCard;
 @property (nonatomic, strong) TiktigerGlassCard *diagnosticsCard;
+@property (nonatomic, strong) UIStackView *creatorStack;
 @property (nonatomic, strong) UIStackView *featureStack;
 @property (nonatomic, strong) UIStackView *settingsStack;
 @property (nonatomic, strong) UIStackView *diagnosticsStack;
 @property (nonatomic, strong) UILabel *statusLabel;
 @property (nonatomic, strong) UILabel *statusDetailLabel;
 @property (nonatomic, copy) NSDictionary<NSString *, id> *lastSnapshot;
+@property (nonatomic, copy) NSDictionary<NSString *, id> *lastDownloadSnapshot;
+- (void)refreshCreatorWithDownloadSnapshot:(NSDictionary<NSString *, id> *)snapshot;
 @end
 
 @implementation TiktigerProfileCenterView
@@ -100,6 +104,16 @@ static NSString * const TiktigerProfileFeatureID = @"profile.center";
     [_statusCard.contentView addSubview:_statusLabel];
     [_statusCard.contentView addSubview:_statusDetailLabel];
 
+    _creatorCard = [[TiktigerGlassCard alloc] initWithTitle:@"Creator Center"];
+    _creatorCard.accessibilityIdentifier = @"tiktiger.creator.card";
+    [_creatorCard setStatusMessage:@"Saved content and creator workflow are organized from verified Download history."];
+    _creatorStack = [[UIStackView alloc] initWithFrame:CGRectZero];
+    _creatorStack.translatesAutoresizingMaskIntoConstraints = NO;
+    _creatorStack.axis = UILayoutConstraintAxisVertical;
+    _creatorStack.alignment = UIStackViewAlignmentFill;
+    _creatorStack.spacing = [TiktigerDesignTokens sectionGap] / 2.0;
+    [_creatorCard.contentView addSubview:_creatorStack];
+
     _featureCard = [[TiktigerGlassCard alloc] initWithTitle:@"Profile Feature Cards"];
     _featureCard.accessibilityIdentifier = @"tiktiger.profile.feature-card";
     [_featureCard setStatusMessage:@"A live overview of the four profile configuration domains."];
@@ -131,6 +145,7 @@ static NSString * const TiktigerProfileFeatureID = @"profile.center";
     [_diagnosticsCard.contentView addSubview:_diagnosticsStack];
 
     [_contentStack addArrangedSubview:_statusCard];
+    [_contentStack addArrangedSubview:_creatorCard];
     [_contentStack addArrangedSubview:_featureCard];
     [_contentStack addArrangedSubview:_settingsCard];
     [_contentStack addArrangedSubview:_diagnosticsCard];
@@ -154,6 +169,10 @@ static NSString * const TiktigerProfileFeatureID = @"profile.center";
         [_statusDetailLabel.trailingAnchor constraintEqualToAnchor:_statusCard.contentView.trailingAnchor constant:-padding],
         [_statusDetailLabel.topAnchor constraintEqualToAnchor:_statusLabel.bottomAnchor constant:[TiktigerDesignTokens sectionGap] / 2.0],
         [_statusDetailLabel.bottomAnchor constraintEqualToAnchor:_statusCard.contentView.bottomAnchor constant:-padding],
+        [_creatorStack.leadingAnchor constraintEqualToAnchor:_creatorCard.contentView.leadingAnchor constant:padding],
+        [_creatorStack.trailingAnchor constraintEqualToAnchor:_creatorCard.contentView.trailingAnchor constant:-padding],
+        [_creatorStack.topAnchor constraintEqualToAnchor:_creatorCard.contentView.topAnchor constant:padding + [TiktigerDesignTokens controlHeight]],
+        [_creatorStack.bottomAnchor constraintEqualToAnchor:_creatorCard.contentView.bottomAnchor constant:-padding],
         [_featureStack.leadingAnchor constraintEqualToAnchor:_featureCard.contentView.leadingAnchor constant:padding],
         [_featureStack.trailingAnchor constraintEqualToAnchor:_featureCard.contentView.trailingAnchor constant:-padding],
         [_featureStack.topAnchor constraintEqualToAnchor:_featureCard.contentView.topAnchor constant:padding + [TiktigerDesignTokens controlHeight]],
@@ -168,6 +187,7 @@ static NSString * const TiktigerProfileFeatureID = @"profile.center";
         [_diagnosticsStack.bottomAnchor constraintEqualToAnchor:_diagnosticsCard.contentView.bottomAnchor constant:-padding]
     ]];
 
+    [self refreshCreatorWithDownloadSnapshot:self.lastDownloadSnapshot ?: @{}];
     [self refreshFeatureCardsWithSnapshot:self.lastSnapshot];
     [self refreshSettingsWithSnapshot:self.lastSnapshot];
     [self refreshDiagnosticsWithSnapshot:self.lastSnapshot];
@@ -184,14 +204,21 @@ static NSString * const TiktigerProfileFeatureID = @"profile.center";
 - (void)setFeatureBinding:(id<TiktigerFeatureBinding>)binding {
     if (_featureBinding != nil && self.eventToken != nil) { [_featureBinding unsubscribeFromModuleEvents:self.eventToken]; }
     _featureBinding = binding;
+    self.lastDownloadSnapshot = binding != nil ? [binding downloadPresentationState] : @{};
     __weak typeof(self) weakSelf = self;
     self.eventToken = [binding subscribeToModuleEvents:^(NSDictionary<NSString *,id> *event) {
         __strong typeof(weakSelf) self = weakSelf;
-        if (self != nil && [event[@"featureID"] isEqual:TiktigerProfileFeatureID]) {
+        if (self == nil) { return; }
+        if ([event[@"featureID"] isEqual:TiktigerProfileFeatureID]) {
             [self applyProfilePresentation:event[@"profile"] ?: [binding profilePresentationState]];
+        }
+        if ([event[@"featureID"] isEqual:@"media.download"]) {
+            self.lastDownloadSnapshot = [event[@"download"] isKindOfClass:[NSDictionary class]] ? [event[@"download"] copy] : [binding downloadPresentationState];
+            [self refreshCreatorWithDownloadSnapshot:self.lastDownloadSnapshot ?: @{}];
         }
     }];
     [self applyProfilePresentation:binding != nil ? [binding profilePresentationState] : @{}];
+    [self refreshCreatorWithDownloadSnapshot:self.lastDownloadSnapshot ?: @{}];
 }
 
 - (void)applyProfilePresentation:(NSDictionary<NSString *,id> *)snapshot {
@@ -215,6 +242,37 @@ static NSString * const TiktigerProfileFeatureID = @"profile.center";
     [self refreshSettingsWithSnapshot:self.lastSnapshot];
     [self refreshDiagnosticsWithSnapshot:self.lastSnapshot];
     [TiktigerMotionSystem animateView:self.statusCard duration:[TiktigerDesignTokens motionFast] animations:^{ self.statusCard.alpha = 0.98; } completion:^(BOOL finished) { (void)finished; self.statusCard.alpha = 1.0; }];
+}
+
+- (void)refreshCreatorWithDownloadSnapshot:(NSDictionary<NSString *, id> *)snapshot {
+    if (self.creatorStack == nil) { return; }
+    for (UIView *view in [self.creatorStack.arrangedSubviews copy]) {
+        [self.creatorStack removeArrangedSubview:view];
+        [view removeFromSuperview];
+    }
+    NSArray *history = [snapshot[@"history"] isKindOfClass:[NSArray class]] ? snapshot[@"history"] : @[];
+    NSDictionary *queue = [snapshot[@"queue"] isKindOfClass:[NSDictionary class]] ? snapshot[@"queue"] : @{};
+    NSArray *queueItems = [queue[@"items"] isKindOfClass:[NSArray class]] ? queue[@"items"] : @[];
+    NSDictionary *currentItem = [snapshot[@"currentItem"] isKindOfClass:[NSDictionary class]] ? snapshot[@"currentItem"] : @{};
+    NSUInteger completedCount = 0;
+    NSUInteger failedCount = 0;
+    for (NSDictionary *item in history) {
+        NSString *state = [item[@"state"] isKindOfClass:[NSString class]] ? item[@"state"] : @"";
+        if ([state isEqualToString:@"completed"]) { completedCount += 1; }
+        if ([state isEqualToString:@"failed"]) { failedCount += 1; }
+    }
+    BOOL workflowActive = [queue[@"active"] boolValue] || currentItem.count > 0;
+    NSString *workflow = workflowActive ? ([currentItem[@"mediaType"] isKindOfClass:[NSString class]] ? [NSString stringWithFormat:@"Active %@ workflow", [currentItem[@"mediaType"] capitalizedString]] : @"Active creator workflow") : @"Ready for a new creator workflow";
+    [self.creatorCard setStatusMessage:history.count > 0 ? @"Saved content is organized from verified Download history." : @"Creator Center is ready; saved content will appear after verified downloads."];
+    NSArray *rows = @[
+        @[ @"Saved Content", [NSString stringWithFormat:@"%lu verified files", (unsigned long)completedCount], @"bookmark.fill", @"tiktiger.creator.saved-content" ],
+        @[ @"Download History", [NSString stringWithFormat:@"%lu recorded · %lu failed", (unsigned long)history.count, (unsigned long)failedCount], @"clock.arrow.circlepath", @"tiktiger.creator.history" ],
+        @[ @"Collections", @"Foundation ready · 0 created", @"square.stack.3d.up", @"tiktiger.creator.collections" ],
+        @[ @"Creator Workflow", [NSString stringWithFormat:@"%@ · %lu queued", workflow, (unsigned long)queueItems.count], @"wand.and.stars", @"tiktiger.creator.workflow" ]
+    ];
+    for (NSArray *definition in rows) {
+        [self.creatorStack addArrangedSubview:[self profileRowWithTitle:definition[0] detail:definition[1] icon:definition[2] identifier:definition[3]]];
+    }
 }
 
 - (NSArray<NSDictionary<NSString *, NSString *> *> *)profileDefinitions {

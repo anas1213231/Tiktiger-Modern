@@ -14,15 +14,21 @@ static NSString * const TiktigerPrivacyFeatureID = @"privacy.center";
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIStackView *contentStack;
 @property (nonatomic, strong) TiktigerGlassCard *statusCard;
+@property (nonatomic, strong) TiktigerGlassCard *healthCard;
 @property (nonatomic, strong) TiktigerGlassCard *featureCard;
 @property (nonatomic, strong) TiktigerGlassCard *settingsCard;
+@property (nonatomic, strong) TiktigerGlassCard *historyCard;
 @property (nonatomic, strong) TiktigerGlassCard *diagnosticsCard;
 @property (nonatomic, strong) UIStackView *featureStack;
+@property (nonatomic, strong) UIStackView *healthStack;
 @property (nonatomic, strong) UIStackView *settingsStack;
+@property (nonatomic, strong) UIStackView *historyStack;
 @property (nonatomic, strong) UIStackView *diagnosticsStack;
 @property (nonatomic, strong) UILabel *statusLabel;
 @property (nonatomic, strong) UILabel *statusDetailLabel;
 @property (nonatomic, copy) NSDictionary<NSString *, id> *lastSnapshot;
+- (void)refreshHealthWithSnapshot:(NSDictionary<NSString *, id> *)snapshot;
+- (void)refreshConfigurationHistoryWithSnapshot:(NSDictionary<NSString *, id> *)snapshot;
 @end
 
 @implementation TiktigerPrivacyCenterView
@@ -100,6 +106,16 @@ static NSString * const TiktigerPrivacyFeatureID = @"privacy.center";
     [_statusCard.contentView addSubview:_statusLabel];
     [_statusCard.contentView addSubview:_statusDetailLabel];
 
+    _healthCard = [[TiktigerGlassCard alloc] initWithTitle:@"Privacy Health Report"];
+    _healthCard.accessibilityIdentifier = @"tiktiger.privacy.health-card";
+    [_healthCard setStatusMessage:@"A compact report from the Privacy Module health snapshot."];
+    _healthStack = [[UIStackView alloc] initWithFrame:CGRectZero];
+    _healthStack.translatesAutoresizingMaskIntoConstraints = NO;
+    _healthStack.axis = UILayoutConstraintAxisVertical;
+    _healthStack.alignment = UIStackViewAlignmentFill;
+    _healthStack.spacing = [TiktigerDesignTokens sectionGap] / 2.0;
+    [_healthCard.contentView addSubview:_healthStack];
+
     _featureCard = [[TiktigerGlassCard alloc] initWithTitle:@"Privacy Feature Cards"];
     _featureCard.accessibilityIdentifier = @"tiktiger.privacy.feature-card";
     [_featureCard setStatusMessage:@"A live overview of the four privacy control domains."];
@@ -120,6 +136,16 @@ static NSString * const TiktigerPrivacyFeatureID = @"privacy.center";
     _settingsStack.spacing = [TiktigerDesignTokens sectionGap] / 2.0;
     [_settingsCard.contentView addSubview:_settingsStack];
 
+    _historyCard = [[TiktigerGlassCard alloc] initWithTitle:@"Configuration History"];
+    _historyCard.accessibilityIdentifier = @"tiktiger.privacy.history-card";
+    [_historyCard setStatusMessage:@"Bounded history of validated privacy configuration changes."];
+    _historyStack = [[UIStackView alloc] initWithFrame:CGRectZero];
+    _historyStack.translatesAutoresizingMaskIntoConstraints = NO;
+    _historyStack.axis = UILayoutConstraintAxisVertical;
+    _historyStack.alignment = UIStackViewAlignmentFill;
+    _historyStack.spacing = [TiktigerDesignTokens sectionGap] / 2.0;
+    [_historyCard.contentView addSubview:_historyStack];
+
     _diagnosticsCard = [[TiktigerGlassCard alloc] initWithTitle:@"Privacy Diagnostics"];
     _diagnosticsCard.accessibilityIdentifier = @"tiktiger.privacy.diagnostics-card";
     [_diagnosticsCard setStatusMessage:@"Module health and last action are supplied by the binding snapshot."];
@@ -131,8 +157,10 @@ static NSString * const TiktigerPrivacyFeatureID = @"privacy.center";
     [_diagnosticsCard.contentView addSubview:_diagnosticsStack];
 
     [_contentStack addArrangedSubview:_statusCard];
+    [_contentStack addArrangedSubview:_healthCard];
     [_contentStack addArrangedSubview:_featureCard];
     [_contentStack addArrangedSubview:_settingsCard];
+    [_contentStack addArrangedSubview:_historyCard];
     [_contentStack addArrangedSubview:_diagnosticsCard];
 
     CGFloat margin = [TiktigerDesignTokens screenMargin];
@@ -154,6 +182,10 @@ static NSString * const TiktigerPrivacyFeatureID = @"privacy.center";
         [_statusDetailLabel.trailingAnchor constraintEqualToAnchor:_statusCard.contentView.trailingAnchor constant:-padding],
         [_statusDetailLabel.topAnchor constraintEqualToAnchor:_statusLabel.bottomAnchor constant:[TiktigerDesignTokens sectionGap] / 2.0],
         [_statusDetailLabel.bottomAnchor constraintEqualToAnchor:_statusCard.contentView.bottomAnchor constant:-padding],
+        [_healthStack.leadingAnchor constraintEqualToAnchor:_healthCard.contentView.leadingAnchor constant:padding],
+        [_healthStack.trailingAnchor constraintEqualToAnchor:_healthCard.contentView.trailingAnchor constant:-padding],
+        [_healthStack.topAnchor constraintEqualToAnchor:_healthCard.contentView.topAnchor constant:padding + [TiktigerDesignTokens controlHeight]],
+        [_healthStack.bottomAnchor constraintEqualToAnchor:_healthCard.contentView.bottomAnchor constant:-padding],
         [_featureStack.leadingAnchor constraintEqualToAnchor:_featureCard.contentView.leadingAnchor constant:padding],
         [_featureStack.trailingAnchor constraintEqualToAnchor:_featureCard.contentView.trailingAnchor constant:-padding],
         [_featureStack.topAnchor constraintEqualToAnchor:_featureCard.contentView.topAnchor constant:padding + [TiktigerDesignTokens controlHeight]],
@@ -162,14 +194,20 @@ static NSString * const TiktigerPrivacyFeatureID = @"privacy.center";
         [_settingsStack.trailingAnchor constraintEqualToAnchor:_settingsCard.contentView.trailingAnchor constant:-padding],
         [_settingsStack.topAnchor constraintEqualToAnchor:_settingsCard.contentView.topAnchor constant:padding + [TiktigerDesignTokens controlHeight]],
         [_settingsStack.bottomAnchor constraintEqualToAnchor:_settingsCard.contentView.bottomAnchor constant:-padding],
+        [_historyStack.leadingAnchor constraintEqualToAnchor:_historyCard.contentView.leadingAnchor constant:padding],
+        [_historyStack.trailingAnchor constraintEqualToAnchor:_historyCard.contentView.trailingAnchor constant:-padding],
+        [_historyStack.topAnchor constraintEqualToAnchor:_historyCard.contentView.topAnchor constant:padding + [TiktigerDesignTokens controlHeight]],
+        [_historyStack.bottomAnchor constraintEqualToAnchor:_historyCard.contentView.bottomAnchor constant:-padding],
         [_diagnosticsStack.leadingAnchor constraintEqualToAnchor:_diagnosticsCard.contentView.leadingAnchor constant:padding],
         [_diagnosticsStack.trailingAnchor constraintEqualToAnchor:_diagnosticsCard.contentView.trailingAnchor constant:-padding],
         [_diagnosticsStack.topAnchor constraintEqualToAnchor:_diagnosticsCard.contentView.topAnchor constant:padding + [TiktigerDesignTokens controlHeight]],
         [_diagnosticsStack.bottomAnchor constraintEqualToAnchor:_diagnosticsCard.contentView.bottomAnchor constant:-padding]
     ]];
 
+    [self refreshHealthWithSnapshot:self.lastSnapshot];
     [self refreshFeatureCardsWithSnapshot:self.lastSnapshot];
     [self refreshSettingsWithSnapshot:self.lastSnapshot];
+    [self refreshConfigurationHistoryWithSnapshot:self.lastSnapshot];
     [self refreshDiagnosticsWithSnapshot:self.lastSnapshot];
 }
 
@@ -210,10 +248,54 @@ static NSString * const TiktigerPrivacyFeatureID = @"privacy.center";
     self.statusDetailLabel.text = [NSString stringWithFormat:@"Configuration: %@\nEnforcement: %@\nThis module reports configuration state; host enforcement remains explicit.", configurationState, self.lastSnapshot[@"enforcementState"] ?: @"unknown"];
     self.statusDetailLabel.accessibilityValue = self.statusDetailLabel.text;
     [self.statusCard setStatusMessage:healthy ? @"Privacy configuration is valid." : @"Privacy configuration is using a safe review state."];
+    [self refreshHealthWithSnapshot:self.lastSnapshot];
     [self refreshFeatureCardsWithSnapshot:self.lastSnapshot];
     [self refreshSettingsWithSnapshot:self.lastSnapshot];
+    [self refreshConfigurationHistoryWithSnapshot:self.lastSnapshot];
     [self refreshDiagnosticsWithSnapshot:self.lastSnapshot];
     [TiktigerMotionSystem animateView:self.statusCard duration:[TiktigerDesignTokens motionFast] animations:^{ self.statusCard.alpha = 0.98; } completion:^(BOOL finished) { (void)finished; self.statusCard.alpha = 1.0; }];
+}
+
+- (void)refreshHealthWithSnapshot:(NSDictionary<NSString *, id> *)snapshot {
+    if (self.healthStack == nil) { return; }
+    for (UIView *view in [self.healthStack.arrangedSubviews copy]) {
+        [self.healthStack removeArrangedSubview:view];
+        [view removeFromSuperview];
+    }
+    NSDictionary *report = [snapshot[@"healthReport"] isKindOfClass:[NSDictionary class]] ? snapshot[@"healthReport"] : @{};
+    NSString *protection = [report[@"protectionState"] isKindOfClass:[NSString class]] ? report[@"protectionState"] : (snapshot[@"protectionState"] ?: @"unknown");
+    NSString *configuration = [report[@"configurationValid"] isKindOfClass:[NSNumber class]] ? ([report[@"configurationValid"] boolValue] ? @"Valid" : @"Review required") : [(snapshot[@"configurationState"] ?: @"unknown") capitalizedString];
+    NSString *enforcement = [report[@"enforcementState"] isKindOfClass:[NSString class]] ? report[@"enforcementState"] : (snapshot[@"enforcementState"] ?: @"configuration-only");
+    NSString *historyCount = [report[@"configurationHistoryCount"] isKindOfClass:[NSNumber class]] ? [NSString stringWithFormat:@"%@ events", report[@"configurationHistoryCount"]] : [NSString stringWithFormat:@"%@ events", snapshot[@"configurationHistoryCount"] ?: @0];
+    NSArray *rows = @[
+        @[ @"Protection", protection.capitalizedString, @"lock.shield", @"tiktiger.privacy.health.protection" ],
+        @[ @"Configuration", configuration, @"checkmark.seal", @"tiktiger.privacy.health.configuration" ],
+        @[ @"Enforcement", enforcement, @"hand.raised", @"tiktiger.privacy.health.enforcement" ],
+        @[ @"History", historyCount, @"clock.arrow.circlepath", @"tiktiger.privacy.health.history" ]
+    ];
+    [self.healthCard setStatusMessage:[protection isEqualToString:@"protected"] ? @"Privacy health is protected by the current configuration." : @"Privacy health is visible for review; enforcement remains configuration-only."];
+    for (NSArray *definition in rows) { [self.healthStack addArrangedSubview:[self privacyRowWithTitle:definition[0] detail:definition[1] icon:definition[2] identifier:definition[3]]]; }
+}
+
+- (void)refreshConfigurationHistoryWithSnapshot:(NSDictionary<NSString *, id> *)snapshot {
+    if (self.historyStack == nil) { return; }
+    for (UIView *view in [self.historyStack.arrangedSubviews copy]) {
+        [self.historyStack removeArrangedSubview:view];
+        [view removeFromSuperview];
+    }
+    NSArray *history = [snapshot[@"configurationHistory"] isKindOfClass:[NSArray class]] ? snapshot[@"configurationHistory"] : @[];
+    NSArray *recent = history.count > 5 ? [history subarrayWithRange:NSMakeRange(history.count - 5, 5)] : history;
+    [self.historyCard setStatusMessage:history.count > 0 ? [NSString stringWithFormat:@"%lu bounded events · showing latest %lu", (unsigned long)history.count, (unsigned long)recent.count] : @"No configuration changes recorded yet."];
+    for (NSDictionary *entry in [recent reverseObjectEnumerator]) {
+        NSString *action = [entry[@"action"] isKindOfClass:[NSString class]] ? entry[@"action"] : @"unknown";
+        NSString *state = [entry[@"state"] isKindOfClass:[NSString class]] ? entry[@"state"] : @"unknown";
+        NSArray *changed = [entry[@"changedSections"] isKindOfClass:[NSArray class]] ? entry[@"changedSections"] : @[];
+        NSString *detail = changed.count > 0 ? [NSString stringWithFormat:@"%@ · %@", state, [changed componentsJoinedByString:@", "]] : state;
+        [self.historyStack addArrangedSubview:[self privacyRowWithTitle:action.capitalizedString detail:detail icon:@"clock.arrow.circlepath" identifier:@"tiktiger.privacy.history.event"]];
+    }
+    if (recent.count == 0) {
+        [self.historyStack addArrangedSubview:[self privacyRowWithTitle:@"History foundation" detail:@"Validated privacy changes will appear here." icon:@"tray" identifier:@"tiktiger.privacy.history.empty"]];
+    }
 }
 
 - (NSArray<NSDictionary<NSString *, NSString *> *> *)privacyDefinitions {
@@ -286,12 +368,18 @@ static NSString * const TiktigerPrivacyFeatureID = @"privacy.center";
     NSString *configurationState = [snapshot[@"configurationState"] isKindOfClass:[NSString class]] ? snapshot[@"configurationState"] : @"unknown";
     NSString *enforcementState = [snapshot[@"enforcementState"] isKindOfClass:[NSString class]] ? snapshot[@"enforcementState"] : @"unknown";
     NSString *lastAction = [snapshot[@"lastAction"] isKindOfClass:[NSString class]] ? snapshot[@"lastAction"] : @"unknown";
+    NSDictionary *health = self.featureBinding != nil ? ([self.featureBinding diagnosticsModuleHealth][TiktigerPrivacyFeatureID] ?: @{}) : @{};
+    NSString *healthStatus = [health[@"healthy"] isKindOfClass:[NSNumber class]] ? ([health[@"healthy"] boolValue] ? @"Pass" : @"Review") : @"Unavailable";
+    NSString *historyCount = [snapshot[@"configurationHistoryCount"] isKindOfClass:[NSNumber class]] ? [NSString stringWithFormat:@"%@ events", snapshot[@"configurationHistoryCount"]] : @"0 events";
     NSArray *rows = @[
         @[ @"Module status", moduleState, @"checkmark.shield", @"tiktiger.privacy.diagnostics.module" ],
         @[ @"Configuration", configurationState, @"gearshape", @"tiktiger.privacy.diagnostics.configuration" ],
         @[ @"Enforcement", enforcementState, @"lock.shield", @"tiktiger.privacy.diagnostics.enforcement" ],
+        @[ @"Health check", healthStatus, @"heart.text.square", @"tiktiger.privacy.diagnostics.health" ],
         @[ @"Last action", lastAction, @"clock.arrow.circlepath", @"tiktiger.privacy.diagnostics.last-action" ],
-        @[ @"Errors", [NSString stringWithFormat:@"%@", snapshot[@"errorCount"] ?: @0], @"exclamationmark.triangle", @"tiktiger.privacy.diagnostics.errors" ]
+        @[ @"History", historyCount, @"clock.badge.checkmark", @"tiktiger.privacy.diagnostics.history" ],
+        @[ @"Errors", [NSString stringWithFormat:@"%@", snapshot[@"errorCount"] ?: @0], @"exclamationmark.triangle", @"tiktiger.privacy.diagnostics.errors" ],
+        @[ @"Diagnostics", @"Redacted binding snapshot", @"eye.slash", @"tiktiger.privacy.diagnostics.redaction" ]
     ];
     for (NSArray *definition in rows) { [self.diagnosticsStack addArrangedSubview:[self privacyRowWithTitle:definition[0] detail:definition[1] icon:definition[2] identifier:definition[3]]]; }
 }

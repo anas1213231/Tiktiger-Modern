@@ -10,6 +10,7 @@ static NSString * const TiktigerPrivacyModuleErrorDomain = @"com.tiktiger.privac
 @property (nonatomic, assign) NSUInteger migrationVersion;
 @property (nonatomic, copy) NSString *lastAction;
 @property (nonatomic, strong) NSDate *lastActionDate;
+@property (nonatomic, strong) NSMutableArray<NSDictionary<NSString *, id> *> *configurationHistory;
 @end
 
 @implementation TiktigerPrivacyModule
@@ -22,6 +23,8 @@ static NSString * const TiktigerPrivacyModuleErrorDomain = @"com.tiktiger.privac
         _migrationVersion = 1;
         _lastAction = @"initialized";
         _lastActionDate = [NSDate date];
+        _configurationHistory = [[NSMutableArray alloc] init];
+        [_configurationHistory addObject:@{ @"action": @"initialized", @"state": @"valid", @"changedSections": @[], @"timestamp": _lastActionDate }];
     }
     return self;
 }
@@ -63,6 +66,23 @@ static NSString * const TiktigerPrivacyModuleErrorDomain = @"com.tiktiger.privac
     return [super enable:error];
 }
 
+- (NSArray<NSString *> *)changedConfigurationSectionsFrom:(NSDictionary<NSString *, id> *)previous to:(NSDictionary<NSString *, id> *)next {
+    NSArray<NSString *> *sections = @[@"viewingPrivacy", @"chatPrivacy", @"dataControls", @"historyControls"];
+    NSMutableArray<NSString *> *changed = [[NSMutableArray alloc] init];
+    for (NSString *section in sections) {
+        id previousValue = previous[section] ?: [NSNull null];
+        id nextValue = next[section] ?: [NSNull null];
+        if (![previousValue isEqual:nextValue]) { [changed addObject:section]; }
+    }
+    return [changed copy];
+}
+
+- (void)appendConfigurationHistoryLockedWithAction:(NSString *)action state:(NSString *)state changedSections:(NSArray<NSString *> *)changedSections {
+    NSDictionary *entry = @{ @"action": action ?: @"unknown", @"state": state ?: @"unknown", @"changedSections": changedSections ?: @[], @"timestamp": [NSDate date] };
+    [self.configurationHistory addObject:entry];
+    if (self.configurationHistory.count > 32) { [self.configurationHistory removeObjectAtIndex:0]; }
+}
+
 - (BOOL)applyConfiguration:(NSDictionary<NSString *,id> *)configuration error:(NSError **)error {
     NSError *validationError = nil;
     if (![self validatePrivacyConfiguration:configuration error:&validationError]) {
@@ -72,14 +92,17 @@ static NSString * const TiktigerPrivacyModuleErrorDomain = @"com.tiktiger.privac
         if (self.errors.count > 100) { [self.errors removeObjectAtIndex:0]; }
         self.lastAction = @"fallback-applied";
         self.lastActionDate = [NSDate date];
+        [self appendConfigurationHistoryLockedWithAction:@"fallback-applied" state:@"fallback" changedSections:@[]];
         [self.privacyLock unlock];
         if (error != NULL) { *error = validationError; }
         return NO;
     }
     [self.privacyLock lock];
+    NSArray<NSString *> *changedSections = [self changedConfigurationSectionsFrom:self.configuration ?: @{} to:configuration ?: @{}];
     self.configuration = [configuration copy];
     self.lastAction = @"configuration-updated";
     self.lastActionDate = [NSDate date];
+    [self appendConfigurationHistoryLockedWithAction:@"configuration-updated" state:@"valid" changedSections:changedSections];
     [self.privacyLock unlock];
     return YES;
 }
@@ -140,7 +163,16 @@ static NSString * const TiktigerPrivacyModuleErrorDomain = @"com.tiktiger.privac
         @"lastAction": self.lastAction ?: @"unknown",
         @"lastActionDate": self.lastActionDate ?: [NSDate date],
         @"errorCount": @(self.errors.count),
-        @"migrationVersion": @(self.migrationVersion)
+        @"migrationVersion": @(self.migrationVersion),
+        @"configurationHistory": [self.configurationHistory copy],
+        @"configurationHistoryCount": @(self.configurationHistory.count),
+        @"healthReport": @{
+            @"protectionState": TiktigerStringFromPrivacyProtectionState(state),
+            @"configurationValid": @(state != TiktigerPrivacyProtectionStateDegraded),
+            @"enforcementState": @"configuration-only",
+            @"errorCount": @(self.errors.count),
+            @"configurationHistoryCount": @(self.configurationHistory.count)
+        }
     };
     [self.privacyLock unlock];
     return TiktigerDeepImmutableCopy(snapshot);
@@ -162,7 +194,10 @@ static NSString * const TiktigerPrivacyModuleErrorDomain = @"com.tiktiger.privac
         @"lastAction": self.lastAction ?: @"unknown",
         @"lastActionDate": self.lastActionDate ?: [NSDate date],
         @"errorCount": @(self.errors.count),
-        @"error": TiktigerRedactedDiagnosticString(error.localizedDescription ?: @"")
+        @"error": TiktigerRedactedDiagnosticString(error.localizedDescription ?: @""),
+        @"protectionState": TiktigerStringFromPrivacyProtectionState([self protectionStateLocked]),
+        @"configurationHistory": [self.configurationHistory copy],
+        @"configurationHistoryCount": @(self.configurationHistory.count)
     };
     [self.privacyLock unlock];
     return TiktigerDeepImmutableCopy(health);
