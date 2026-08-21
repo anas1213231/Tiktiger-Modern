@@ -49,6 +49,8 @@
 		DCCEAF88E7C25ADEAC88DBE7 /* TiktigerGlassButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 12F4819D8AD5291322FE59B7 /* TiktigerGlassButton.m */; };
 		EB084A61C040B59AB0B427FE /* TiktigerPreferencesModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 53B1E5D565FEFD2089CEE07C /* TiktigerPreferencesModule.m */; };
 		C1A2B3D4E5F60718293A4B5C /* TiktigerPrivacyModule.m in Sources */ = {isa = PBXBuildFile; fileRef = E1A2B3C4D5E60718293A4B5E /* TiktigerPrivacyModule.m */; };
+		D4E5F60718293A4B5C6D7E8F /* TiktigerAppearanceModule.m in Sources */ = {isa = PBXBuildFile; fileRef = E4F60718293A4B5C6D7E8F90 /* TiktigerAppearanceModule.m */; };
+		A4B5C6D7E8F9012A3B4C5D6E /* TiktigerAppearanceEngineView.m in Sources */ = {isa = PBXBuildFile; fileRef = C4D5E6F708192A3B4C5D6E7F /* TiktigerAppearanceEngineView.m */; };
 		F1A2B3C4D5E60718293A4B5F /* TiktigerPrivacyCenterView.m in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F60718293A4B5C6D /* TiktigerPrivacyCenterView.m */; };
 		EDB962BC18B5D8348F03594D /* TiktigerDashboardView.m in Sources */ = {isa = PBXBuildFile; fileRef = C519B701694EA4932DF73F5B /* TiktigerDashboardView.m */; };
 		FAEF64AB566638A2532A4D43 /* TiktigerFeatureStatusCard.m in Sources */ = {isa = PBXBuildFile; fileRef = CBF33EECFA060269B6C4582A /* TiktigerFeatureStatusCard.m */; };
@@ -142,6 +144,8 @@
 		D3A6E6C35F543F0407E85030 /* TiktigerPreferencesModule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerPreferencesModule.h; path = TiktigerPreferencesModule.h; sourceTree = "<group>"; };
 		D1A2B3C4D5E60718293A4B5D /* TiktigerPrivacyModule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerPrivacyModule.h; path = TiktigerPrivacyModule.h; sourceTree = "<group>"; };
 		E1A2B3C4D5E60718293A4B5E /* TiktigerPrivacyModule.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerPrivacyModule.m; path = TiktigerPrivacyModule.m; sourceTree = "<group>"; };
+		F4F60718293A4B5C6D7E8F90 /* TiktigerAppearanceModule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerAppearanceModule.h; path = TiktigerAppearanceModule.h; sourceTree = "<group>"; };
+		E4F60718293A4B5C6D7E8F90 /* TiktigerAppearanceModule.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerAppearanceModule.m; path = TiktigerAppearanceModule.m; sourceTree = "<group>"; };
 		D8EF0E4D7038507A6D1778BA /* TiktigerSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerSettingsViewController.h; path = TiktigerSettingsViewController.h; sourceTree = "<group>"; };
 		DA9E9A949C6E9A4CD25C6CA8 /* TiktigerDownloadCenterView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerDownloadCenterView.m; path = TiktigerDownloadCenterView.m; sourceTree = "<group>"; };
 		DBDC50AEC1CAA52875E62B6D /* TiktigerFeatureBindingAdapter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerFeatureBindingAdapter.m; path = TiktigerFeatureBindingAdapter.m; sourceTree = "<group>"; };
@@ -161,6 +165,8 @@
 		F21A643271EECF9DC217C383 /* TiktigerDownloadCenterView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerDownloadCenterView.h; path = TiktigerDownloadCenterView.h; sourceTree = "<group>"; };
 		A2B3C4D5E6F708192A3B4C5D /* TiktigerPrivacyCenterView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerPrivacyCenterView.h; path = TiktigerPrivacyCenterView.h; sourceTree = "<group>"; };
 		B2C3D4E5F60718293A4B5C6D /* TiktigerPrivacyCenterView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerPrivacyCenterView.m; path = TiktigerPrivacyCenterView.m; sourceTree = "<group>"; };
+		B4C5D6E7F80912A3B4C5D6E7 /* TiktigerAppearanceEngineView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerAppearanceEngineView.h; path = TiktigerAppearanceEngineView.h; sourceTree = "<group>"; };
+		C4D5E6F708192A3B4C5D6E7F /* TiktigerAppearanceEngineView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerAppearanceEngineView.m; path = TiktigerAppearanceEngineView.m; sourceTree = "<group>"; };
 		F44A84CADB0C4A71F14952A3 /* TIKTIGER_BUILD_VALIDATION_REPORT.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.markdown; name = TIKTIGER_BUILD_VALIDATION_REPORT.md; path = TIKTIGER_BUILD_VALIDATION_REPORT.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -227,6 +233,8 @@
 			53B1E5D565FEFD2089CEE07C /* TiktigerPreferencesModule.m */,
 			D1A2B3C4D5E60718293A4B5D /* TiktigerPrivacyModule.h */,
 			E1A2B3C4D5E60718293A4B5E /* TiktigerPrivacyModule.m */,
+			F4F60718293A4B5C6D7E8F90 /* TiktigerAppearanceModule.h */,
+			E4F60718293A4B5C6D7E8F90 /* TiktigerAppearanceModule.m */,
 
 				D35DCBB0203DC89E55AB6C36 /* TiktigerSecureConfigurationFeature.h */,
 				4C448E4FC9C14F6153163F99 /* TiktigerSecureConfigurationFeature.m */,
@@ -275,6 +283,8 @@
 			DA9E9A949C6E9A4CD25C6CA8 /* TiktigerDownloadCenterView.m */,
 			A2B3C4D5E6F708192A3B4C5D /* TiktigerPrivacyCenterView.h */,
 			B2C3D4E5F60718293A4B5C6D /* TiktigerPrivacyCenterView.m */,
+			B4C5D6E7F80912A3B4C5D6E7 /* TiktigerAppearanceEngineView.h */,
+			C4D5E6F708192A3B4C5D6E7F /* TiktigerAppearanceEngineView.m */,
 
 				E93BA4700A67156E02E34593 /* TiktigerDownloadCenterViewController.h */,
 				26EBE42B8ADFF79E07772F1D /* TiktigerDownloadCenterViewController.m */,
@@ -468,6 +478,7 @@
 				6310E675D117232EC2A01AEF /* TiktigerModuleManager.m in Sources */,
 									EB084A61C040B59AB0B427FE /* TiktigerPreferencesModule.m in Sources */,
 					C1A2B3D4E5F60718293A4B5C /* TiktigerPrivacyModule.m in Sources */,
+					D4E5F60718293A4B5C6D7E8F /* TiktigerAppearanceModule.m in Sources */,
 
 				0C6DA38EF088998FCD837DC6 /* TiktigerSecureConfigurationFeature.m in Sources */,
 				C7228438CA40CD0FC51CB1FB /* TiktigerUserPreferencesFeature.m in Sources */,
@@ -479,6 +490,7 @@
 				0A0B9152EB99B97E72B0CF1A /* TiktigerDiagnosticsCenterView.m in Sources */,
 									8D8AC93A3E27C2BD41989A99 /* TiktigerDownloadCenterView.m in Sources */,
 					F1A2B3C4D5E60718293A4B5F /* TiktigerPrivacyCenterView.m in Sources */,
+					A4B5C6D7E8F9012A3B4C5D6E /* TiktigerAppearanceEngineView.m in Sources */,
 
 				4C50B7B660793120A1C12A8A /* TiktigerDownloadCenterViewController.m in Sources */,
 				AEB34CC5474AA8EE7D38EFE2 /* TiktigerFeatureControlsView.m in Sources */,

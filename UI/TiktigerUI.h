@@ -10,6 +10,7 @@
 #import "TiktigerDashboardView.h"
 #import "TiktigerDownloadCenterView.h"
 #import "TiktigerPrivacyCenterView.h"
+#import "TiktigerAppearanceEngineView.h"
 #import "TiktigerSettingsView.h"
 #import "TiktigerDeveloperCard.h"
 #import "TiktigerDashboardViewController.h"
