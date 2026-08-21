@@ -7,6 +7,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)recordEntryPointState:(NSDictionary<NSString *, id> *)state;
 - (void)recordNavigationState:(NSDictionary<NSString *, id> *)state;
 - (void)recordCompatibilityResult:(NSDictionary<NSString *, id> *)result;
+- (void)recordPresentationState:(NSDictionary<NSString *, id> *)state;
 
 - (NSDictionary<NSString *, id> *)snapshot;
 - (void)reset;
