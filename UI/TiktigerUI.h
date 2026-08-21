@@ -11,6 +11,7 @@
 #import "TiktigerDownloadCenterView.h"
 #import "TiktigerPrivacyCenterView.h"
 #import "TiktigerAppearanceEngineView.h"
+#import "TiktigerChatCenterView.h"
 #import "TiktigerSettingsView.h"
 #import "TiktigerDeveloperCard.h"
 #import "TiktigerDashboardViewController.h"
