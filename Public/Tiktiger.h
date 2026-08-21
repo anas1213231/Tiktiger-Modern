@@ -4,6 +4,10 @@
 #import "TiktigerDynamicLibraryLoader.h"
 #import "TiktigerPresentationBridge.h"
 #import "TiktigerIntegrationValidation.h"
+#import "TiktigerTikTokEntryPoint.h"
+#import "TiktigerTikTokCompatibility.h"
+#import "TiktigerTikTokIntegrationDiagnostics.h"
+#import "TiktigerTikTokIntegrationBridge.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

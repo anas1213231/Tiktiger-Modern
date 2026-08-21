@@ -65,6 +65,10 @@
 		C2D3E4F5061728394A5B6C7D /* TiktigerDynamicLibraryLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 28394A5B6C7D8E9FAB0C1D /* TiktigerDynamicLibraryLoader.m */; };
 		D3E4F5061728394A5B6C7D8E /* TiktigerPresentationBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A5B6C7D8E9FAB0C1D2E3F /* TiktigerPresentationBridge.m */; };
 		E4F5061728394A5B6C7D8E9F /* TiktigerIntegrationValidation.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C7D8E9FAB0C1D2E3F4051 /* TiktigerIntegrationValidation.m */; };
+		A1C2D3E4F5061728394A5B6D /* TiktigerTikTokEntryPoint.m in Sources */ = {isa = PBXBuildFile; fileRef = F1C2D3E4F5061728394A5B72 /* TiktigerTikTokEntryPoint.m */; };
+		B1C2D3E4F5061728394A5B6E /* TiktigerTikTokCompatibility.m in Sources */ = {isa = PBXBuildFile; fileRef = B2C2D3E4F5061728394A5B74 /* TiktigerTikTokCompatibility.m */; };
+		C1C2D3E4F5061728394A5B6F /* TiktigerTikTokIntegrationDiagnostics.m in Sources */ = {isa = PBXBuildFile; fileRef = D2C2D3E4F5061728394A5B76 /* TiktigerTikTokIntegrationDiagnostics.m */; };
+		D1C2D3E4F5061728394A5B70 /* TiktigerTikTokIntegrationBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F2C2D3E4F5061728394A5B78 /* TiktigerTikTokIntegrationBridge.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -95,6 +99,14 @@
 		4A5B6C7D8E9FAB0C1D2E3F /* TiktigerPresentationBridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerPresentationBridge.m; path = TiktigerPresentationBridge.m; sourceTree = "<group>"; };
 		5B6C7D8E9FAB0C1D2E3F40 /* TiktigerIntegrationValidation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerIntegrationValidation.h; path = TiktigerIntegrationValidation.h; sourceTree = "<group>"; };
 		6C7D8E9FAB0C1D2E3F4051 /* TiktigerIntegrationValidation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerIntegrationValidation.m; path = TiktigerIntegrationValidation.m; sourceTree = "<group>"; };
+		E1C2D3E4F5061728394A5B71 /* TiktigerTikTokEntryPoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerTikTokEntryPoint.h; path = TiktigerTikTokEntryPoint.h; sourceTree = "<group>"; };
+		F1C2D3E4F5061728394A5B72 /* TiktigerTikTokEntryPoint.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerTikTokEntryPoint.m; path = TiktigerTikTokEntryPoint.m; sourceTree = "<group>"; };
+		A2C2D3E4F5061728394A5B73 /* TiktigerTikTokCompatibility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerTikTokCompatibility.h; path = TiktigerTikTokCompatibility.h; sourceTree = "<group>"; };
+		B2C2D3E4F5061728394A5B74 /* TiktigerTikTokCompatibility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerTikTokCompatibility.m; path = TiktigerTikTokCompatibility.m; sourceTree = "<group>"; };
+		C2C2D3E4F5061728394A5B75 /* TiktigerTikTokIntegrationDiagnostics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerTikTokIntegrationDiagnostics.h; path = TiktigerTikTokIntegrationDiagnostics.h; sourceTree = "<group>"; };
+		D2C2D3E4F5061728394A5B76 /* TiktigerTikTokIntegrationDiagnostics.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerTikTokIntegrationDiagnostics.m; path = TiktigerTikTokIntegrationDiagnostics.m; sourceTree = "<group>"; };
+		E2C2D3E4F5061728394A5B77 /* TiktigerTikTokIntegrationBridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerTikTokIntegrationBridge.h; path = TiktigerTikTokIntegrationBridge.h; sourceTree = "<group>"; };
+		F2C2D3E4F5061728394A5B78 /* TiktigerTikTokIntegrationBridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerTikTokIntegrationBridge.m; path = TiktigerTikTokIntegrationBridge.m; sourceTree = "<group>"; };
 		2FCEE409D40C539FFCE5732D /* TiktigerGlassCard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerGlassCard.h; path = TiktigerGlassCard.h; sourceTree = "<group>"; };
 		3A83E765CC2C4CCFA80FFC18 /* TIKTIGER_GITHUB_BUILD_REPORT.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.markdown; name = TIKTIGER_GITHUB_BUILD_REPORT.md; path = TIKTIGER_GITHUB_BUILD_REPORT.md; sourceTree = "<group>"; };
 		3CBB9382A47B8F3464555AA2 /* TiktigerDashboardViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerDashboardViewController.h; path = TiktigerDashboardViewController.h; sourceTree = "<group>"; };
@@ -431,6 +443,14 @@
 				4A5B6C7D8E9FAB0C1D2E3F /* TiktigerPresentationBridge.m */,
 				5B6C7D8E9FAB0C1D2E3F40 /* TiktigerIntegrationValidation.h */,
 				6C7D8E9FAB0C1D2E3F4051 /* TiktigerIntegrationValidation.m */,
+				E1C2D3E4F5061728394A5B71 /* TiktigerTikTokEntryPoint.h */,
+				F1C2D3E4F5061728394A5B72 /* TiktigerTikTokEntryPoint.m */,
+				A2C2D3E4F5061728394A5B73 /* TiktigerTikTokCompatibility.h */,
+				B2C2D3E4F5061728394A5B74 /* TiktigerTikTokCompatibility.m */,
+				C2C2D3E4F5061728394A5B75 /* TiktigerTikTokIntegrationDiagnostics.h */,
+				D2C2D3E4F5061728394A5B76 /* TiktigerTikTokIntegrationDiagnostics.m */,
+				E2C2D3E4F5061728394A5B77 /* TiktigerTikTokIntegrationBridge.h */,
+				F2C2D3E4F5061728394A5B78 /* TiktigerTikTokIntegrationBridge.m */,
 			);
 			name = Integration;
 			path = Integration;
@@ -582,6 +602,10 @@
 					C2D3E4F5061728394A5B6C7D /* TiktigerDynamicLibraryLoader.m in Sources */,
 					D3E4F5061728394A5B6C7D8E /* TiktigerPresentationBridge.m in Sources */,
 					E4F5061728394A5B6C7D8E9F /* TiktigerIntegrationValidation.m in Sources */,
+					A1C2D3E4F5061728394A5B6D /* TiktigerTikTokEntryPoint.m in Sources */,
+					B1C2D3E4F5061728394A5B6E /* TiktigerTikTokCompatibility.m in Sources */,
+					C1C2D3E4F5061728394A5B6F /* TiktigerTikTokIntegrationDiagnostics.m in Sources */,
+					D1C2D3E4F5061728394A5B70 /* TiktigerTikTokIntegrationBridge.m in Sources */,
 
 				);
 
