@@ -9,6 +9,7 @@
 #import "TiktigerToast.h"
 #import "TiktigerDashboardView.h"
 #import "TiktigerDownloadCenterView.h"
+#import "TiktigerPrivacyCenterView.h"
 #import "TiktigerSettingsView.h"
 #import "TiktigerDeveloperCard.h"
 #import "TiktigerDashboardViewController.h"

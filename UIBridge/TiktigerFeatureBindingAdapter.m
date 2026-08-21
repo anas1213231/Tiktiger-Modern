@@ -2,6 +2,7 @@
 #import "TiktigerModuleManager.h"
 #import "TiktigerDownloadModule.h"
 #import "TiktigerPreferencesModule.h"
+#import "TiktigerPrivacyModule.h"
 #import "TiktigerFeatureModuleDescriptor.h"
 
 NSString * const TiktigerFeatureBindingEventDidChange = @"com.tiktiger.feature-binding.did-change";
@@ -59,6 +60,11 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
         (void)snapshot;
     }];
     return [download downloadSnapshot];
+}
+
+- (NSDictionary<NSString *,id> *)privacyPresentationState {
+    id<TiktigerFeatureModuleProtocol> module = [self.moduleManager.registry moduleWithID:@"privacy.center"];
+    return [module respondsToSelector:@selector(privacySnapshot)] ? [(TiktigerPrivacyModule *)module privacySnapshot] : @{};
 }
 
 - (NSURL *)downloadHistoryFileURLForID:(NSString *)taskID error:(NSError **)error {
@@ -121,6 +127,9 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
         result = taskID.length > 0 ? [(TiktigerDownloadModule *)module retryHistoryItemWithID:taskID error:error] : [(TiktigerDownloadModule *)module retryCurrent:error];
     } else if ([action isEqualToString:@"deleteHistoryItem"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
         result = [(TiktigerDownloadModule *)module deleteHistoryItemWithID:payload[@"taskID"] error:error];
+    } else if ([action isEqualToString:@"updatePrivacySetting"] && [module isKindOfClass:[TiktigerPrivacyModule class]]) {
+        NSString *key = [payload[@"key"] isKindOfClass:[NSString class]] ? payload[@"key"] : @"";
+        result = [(TiktigerPrivacyModule *)module updatePrivacySetting:key value:payload[@"value"] ?: @NO error:error];
     } else if ([action isEqualToString:@"pauseDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
         result = [(TiktigerDownloadModule *)module pauseCurrent:error];
     } else if ([action isEqualToString:@"resumeDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
@@ -167,6 +176,7 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
         @"featureID": featureID ?: @"",
         @"action": action ?: @"",
         @"download": [self downloadPresentationState] ?: @{},
+        @"privacy": [self privacyPresentationState] ?: @{},
         @"preferences": [self preferencesPresentation] ?: @{},
         @"health": [self diagnosticsModuleHealth] ?: @{}
     };
