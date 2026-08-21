@@ -61,6 +61,10 @@
 		F1A2B3C4D5E60718293A4B5F /* TiktigerPrivacyCenterView.m in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F60718293A4B5C6D /* TiktigerPrivacyCenterView.m */; };
 		EDB962BC18B5D8348F03594D /* TiktigerDashboardView.m in Sources */ = {isa = PBXBuildFile; fileRef = C519B701694EA4932DF73F5B /* TiktigerDashboardView.m */; };
 		FAEF64AB566638A2532A4D43 /* TiktigerFeatureStatusCard.m in Sources */ = {isa = PBXBuildFile; fileRef = CBF33EECFA060269B6C4582A /* TiktigerFeatureStatusCard.m */; };
+		B1C2D3E4F5061728394A5B6C /* TiktigerHostCoordinator.m in Sources */ = {isa = PBXBuildFile; fileRef = 061728394A5B6C7D8E9FAB0 /* TiktigerHostCoordinator.m */; };
+		C2D3E4F5061728394A5B6C7D /* TiktigerDynamicLibraryLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 28394A5B6C7D8E9FAB0C1D /* TiktigerDynamicLibraryLoader.m */; };
+		D3E4F5061728394A5B6C7D8E /* TiktigerPresentationBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A5B6C7D8E9FAB0C1D2E3F /* TiktigerPresentationBridge.m */; };
+		E4F5061728394A5B6C7D8E9F /* TiktigerIntegrationValidation.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C7D8E9FAB0C1D2E3F4051 /* TiktigerIntegrationValidation.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -83,6 +87,14 @@
 		2A95192D05ADBE1BF6F7120F /* TiktigerPresentationContracts.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerPresentationContracts.m; path = TiktigerPresentationContracts.m; sourceTree = "<group>"; };
 		F19A4B5C6D7E8F901234567F /* TiktigerNavigationContract.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerNavigationContract.h; path = TiktigerNavigationContract.h; sourceTree = "<group>"; };
 		A29A4B5C6D7E8F9012345670 /* TiktigerNavigationContract.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerNavigationContract.m; path = TiktigerNavigationContract.m; sourceTree = "<group>"; };
+		F5061728394A5B6C7D8E9FA /* TiktigerHostCoordinator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerHostCoordinator.h; path = TiktigerHostCoordinator.h; sourceTree = "<group>"; };
+		061728394A5B6C7D8E9FAB0 /* TiktigerHostCoordinator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerHostCoordinator.m; path = TiktigerHostCoordinator.m; sourceTree = "<group>"; };
+		1728394A5B6C7D8E9FAB0C /* TiktigerDynamicLibraryLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerDynamicLibraryLoader.h; path = TiktigerDynamicLibraryLoader.h; sourceTree = "<group>"; };
+		28394A5B6C7D8E9FAB0C1D /* TiktigerDynamicLibraryLoader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerDynamicLibraryLoader.m; path = TiktigerDynamicLibraryLoader.m; sourceTree = "<group>"; };
+		394A5B6C7D8E9FAB0C1D2E /* TiktigerPresentationBridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerPresentationBridge.h; path = TiktigerPresentationBridge.h; sourceTree = "<group>"; };
+		4A5B6C7D8E9FAB0C1D2E3F /* TiktigerPresentationBridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerPresentationBridge.m; path = TiktigerPresentationBridge.m; sourceTree = "<group>"; };
+		5B6C7D8E9FAB0C1D2E3F40 /* TiktigerIntegrationValidation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerIntegrationValidation.h; path = TiktigerIntegrationValidation.h; sourceTree = "<group>"; };
+		6C7D8E9FAB0C1D2E3F4051 /* TiktigerIntegrationValidation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerIntegrationValidation.m; path = TiktigerIntegrationValidation.m; sourceTree = "<group>"; };
 		2FCEE409D40C539FFCE5732D /* TiktigerGlassCard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerGlassCard.h; path = TiktigerGlassCard.h; sourceTree = "<group>"; };
 		3A83E765CC2C4CCFA80FFC18 /* TIKTIGER_GITHUB_BUILD_REPORT.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.markdown; name = TIKTIGER_GITHUB_BUILD_REPORT.md; path = TIKTIGER_GITHUB_BUILD_REPORT.md; sourceTree = "<group>"; };
 		3CBB9382A47B8F3464555AA2 /* TiktigerDashboardViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerDashboardViewController.h; path = TiktigerDashboardViewController.h; sourceTree = "<group>"; };
@@ -214,6 +226,7 @@
 				F27261A435F9928065C35E88 /* Public */,
 				6311D04A28E617C246F4E86D /* UI */,
 				B81CF9AE6F33575D676711C5 /* UIBridge */,
+				7D8E9FAB0C1D2E3F405162 /* Integration */,
 				872E8F2D2126A3D4E4971D6B /* Products */,
 				1936B5B31461C2370632B442 /* README.md */,
 			);
@@ -407,6 +420,22 @@
 			path = UIBridge;
 			sourceTree = "<group>";
 		};
+		7D8E9FAB0C1D2E3F405162 /* Integration */ = {
+			isa = PBXGroup;
+			children = (
+				F5061728394A5B6C7D8E9FA /* TiktigerHostCoordinator.h */,
+				061728394A5B6C7D8E9FAB0 /* TiktigerHostCoordinator.m */,
+				1728394A5B6C7D8E9FAB0C /* TiktigerDynamicLibraryLoader.h */,
+				28394A5B6C7D8E9FAB0C1D /* TiktigerDynamicLibraryLoader.m */,
+				394A5B6C7D8E9FAB0C1D2E /* TiktigerPresentationBridge.h */,
+				4A5B6C7D8E9FAB0C1D2E3F /* TiktigerPresentationBridge.m */,
+				5B6C7D8E9FAB0C1D2E3F40 /* TiktigerIntegrationValidation.h */,
+				6C7D8E9FAB0C1D2E3F4051 /* TiktigerIntegrationValidation.m */,
+			);
+			name = Integration;
+			path = Integration;
+			sourceTree = "<group>";
+		};
 		F27261A435F9928065C35E88 /* Public */ = {
 			isa = PBXGroup;
 			children = (
@@ -548,9 +577,14 @@
 				03CDC7B43E896393BA132E62 /* TiktigerToast.m in Sources */,
 				165829A4C3ED269B2C655CF7 /* TiktigerFeatureBindingAdapter.m in Sources */,
 									914830FB5B2B014EF95820B8 /* TiktigerPresentationContracts.m in Sources */,
-					E19A4B5C6D7E8F901234567E /* TiktigerNavigationContract.m in Sources */,
+										E19A4B5C6D7E8F901234567E /* TiktigerNavigationContract.m in Sources */,
+					B1C2D3E4F5061728394A5B6C /* TiktigerHostCoordinator.m in Sources */,
+					C2D3E4F5061728394A5B6C7D /* TiktigerDynamicLibraryLoader.m in Sources */,
+					D3E4F5061728394A5B6C7D8E /* TiktigerPresentationBridge.m in Sources */,
+					E4F5061728394A5B6C7D8E9F /* TiktigerIntegrationValidation.m in Sources */,
 
-			);
+				);
+
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */

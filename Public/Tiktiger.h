@@ -1,5 +1,9 @@
 #import <Foundation/Foundation.h>
 #import "TiktigerRuntimeState.h"
+#import "TiktigerHostCoordinator.h"
+#import "TiktigerDynamicLibraryLoader.h"
+#import "TiktigerPresentationBridge.h"
+#import "TiktigerIntegrationValidation.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
