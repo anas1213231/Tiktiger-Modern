@@ -8,6 +8,7 @@
 #import "TiktigerStatusBadge.h"
 #import "TiktigerToast.h"
 #import "TiktigerDashboardView.h"
+#import "TiktigerNavigationContract.h"
 #import "TiktigerDownloadCenterView.h"
 #import "TiktigerPrivacyCenterView.h"
 #import "TiktigerAppearanceEngineView.h"

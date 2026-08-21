@@ -1,4 +1,5 @@
 #import "TiktigerProfileModule.h"
+#import "TiktigerFeatureRegistry.h"
 
 static NSString * const TiktigerProfileModuleErrorDomain = @"com.tiktiger.profile-module";
 
@@ -67,7 +68,8 @@ static NSString * const TiktigerProfileModuleErrorDomain = @"com.tiktiger.profil
     if (![self validateProfileConfiguration:configuration error:&validationError]) {
         [self.profileLock lock];
         self.configuration = [self safeFallback];
-        [self.errors addObject:@{ @"category": @"validation", @"message": validationError.localizedDescription ?: @"Invalid profile configuration." }];
+        [self.errors addObject:@{ @"category": @"validation", @"message": TiktigerRedactedDiagnosticString(validationError.localizedDescription ?: @"Invalid profile configuration.") }];
+        if (self.errors.count > 100) { [self.errors removeObjectAtIndex:0]; }
         self.lastAction = @"fallback-applied";
         self.lastActionDate = [NSDate date];
         [self.profileLock unlock];
@@ -139,7 +141,7 @@ static NSString * const TiktigerProfileModuleErrorDomain = @"com.tiktiger.profil
         @"migrationVersion": @(self.migrationVersion)
     };
     [self.profileLock unlock];
-    return snapshot;
+    return TiktigerDeepImmutableCopy(snapshot);
 }
 
 - (NSDictionary<NSString *,id> *)profileHealthSnapshot {
@@ -158,10 +160,10 @@ static NSString * const TiktigerProfileModuleErrorDomain = @"com.tiktiger.profil
         @"lastAction": self.lastAction ?: @"unknown",
         @"lastActionDate": self.lastActionDate ?: [NSDate date],
         @"errorCount": @(self.errors.count),
-        @"error": error.localizedDescription ?: @""
+        @"error": TiktigerRedactedDiagnosticString(error.localizedDescription ?: @"")
     };
     [self.profileLock unlock];
-    return health;
+    return TiktigerDeepImmutableCopy(health);
 }
 
 - (NSDictionary<NSString *,id> *)healthCheck {

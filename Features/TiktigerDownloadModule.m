@@ -3,6 +3,7 @@
 #import "TiktigerDownloadStorageManager.h"
 #import "TiktigerMediaProcessingLayer.h"
 #import "TiktigerDownloadRecoveryManager.h"
+#import "TiktigerFeatureRegistry.h"
 
 static NSString * const TiktigerDownloadModuleErrorDomain = @"com.tiktiger.download-module";
 static NSUInteger const TiktigerDownloadHistoryLimit = 100;
@@ -138,7 +139,8 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
         self.downloadState = TiktigerDownloadStateFailed;
         NSError *safeError = validationError ?: [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:10 userInfo:@{NSLocalizedDescriptionKey: @"Download engine rejected the task."}];
         self.lastError = [self errorSnapshotFromError:safeError];
-        [self.errors addObject:self.lastError];
+        [self.errors addObject:TiktigerDeepImmutableCopy(self.lastError)];
+        if (self.errors.count > 100) { [self.errors removeObjectAtIndex:0]; }
         [self refreshQueueState];
         [self.downloadLock unlock];
         [self emitSnapshotEvent];
@@ -380,7 +382,7 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
         @"engineState": self.engine.snapshot[@"engineState"] ?: @"ready"
     };
     [self.downloadLock unlock];
-    return snapshot;
+    return TiktigerDeepImmutableCopy(snapshot);
 }
 
 - (NSDictionary<NSString *,id> *)healthCheck {
@@ -394,7 +396,7 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
     health[@"engineState"] = self.engine.snapshot[@"engineState"] ?: @"ready";
     health[@"configurationState"] = self.configuration[@"schemaVersion"] ? @"valid" : @"fallback";
     [self.downloadLock unlock];
-    return [health copy];
+    return TiktigerDeepImmutableCopy([health copy]);
 }
 
 - (void)setEventHandler:(TiktigerDownloadModuleEventHandler)eventHandler {
@@ -464,7 +466,8 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
         self.currentItem = [item copy];
         self.downloadState = TiktigerDownloadStateFailed;
         self.lastError = item[@"error"];
-        [self.errors addObject:self.lastError];
+        [self.errors addObject:TiktigerDeepImmutableCopy(self.lastError)];
+        if (self.errors.count > 100) { [self.errors removeObjectAtIndex:0]; }
         [self appendHistoryItem:item];
         [self refreshQueueState];
     }
@@ -547,7 +550,7 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
 }
 
 - (NSDictionary<NSString *, id> *)errorSnapshotFromError:(NSError *)error {
-    return @{ @"domain": error.domain ?: @"", @"code": @(error.code), @"message": error.localizedDescription ?: @"" };
+    return TiktigerRedactedErrorDictionary(error, @"download");
 }
 
 - (TiktigerDownloadEngine *)makeEngine {

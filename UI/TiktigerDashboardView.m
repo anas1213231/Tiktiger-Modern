@@ -5,6 +5,7 @@
 #import "TiktigerGlassRow.h"
 #import "TiktigerStatusBadge.h"
 #import "TiktigerFeatureStatusCard.h"
+#import "TiktigerNavigationContract.h"
 
 @interface TiktigerDashboardView ()
 @property (nonatomic, strong) UILabel *logoLabel;
@@ -212,12 +213,12 @@
 
 - (NSArray<NSDictionary<NSString *, id> *> *)plannedModuleDefinitions {
     return @[
-        @{ @"id": @"media.download", @"title": @"Download Center", @"summary": @"Media queue and download status", @"icon": @"arrow.down.circle" },
-        @{ @"id": @"privacy.center", @"title": @"Privacy Center", @"summary": @"Privacy controls and visibility state", @"icon": @"lock.shield" },
-        @{ @"id": @"chat.center", @"title": @"Chat Center", @"summary": @"Chat utilities placeholder", @"icon": @"bubble.left.and.bubble.right" },
-        @{ @"id": @"profile.center", @"title": @"Profile Center", @"summary": @"Profile tools placeholder", @"icon": @"person.crop.circle" },
-        @{ @"id": @"appearance.engine", @"title": @"Appearance Engine", @"summary": @"Glass, OLED, theme and motion policy", @"icon": @"circle.lefthalf.filled" },
-        @{ @"id": @"system.center", @"title": @"System Center", @"summary": @"Diagnostics, feature manager and backup", @"icon": @"gearshape.2" }
+        @{ @"id": TiktigerNavigationRouteDownload, @"title": @"Download Center", @"summary": @"Media queue and download status", @"icon": @"arrow.down.circle" },
+        @{ @"id": TiktigerNavigationRoutePrivacy, @"title": @"Privacy Center", @"summary": @"Privacy controls and visibility state", @"icon": @"lock.shield" },
+        @{ @"id": TiktigerNavigationRouteChat, @"title": @"Chat Center", @"summary": @"Chat utilities placeholder", @"icon": @"bubble.left.and.bubble.right" },
+        @{ @"id": TiktigerNavigationRouteProfile, @"title": @"Profile Center", @"summary": @"Profile tools placeholder", @"icon": @"person.crop.circle" },
+        @{ @"id": TiktigerNavigationRouteAppearance, @"title": @"Appearance Engine", @"summary": @"Glass, OLED, theme and motion policy", @"icon": @"circle.lefthalf.filled" },
+        @{ @"id": TiktigerNavigationRouteSystem, @"title": @"System Center", @"summary": @"Diagnostics, feature manager and backup", @"icon": @"gearshape.2" }
     ];
 }
 
@@ -293,7 +294,7 @@
 
 - (void)handleSettingsAction:(TiktigerGlassButton *)sender {
     (void)sender;
-    if (self.navigationHandler != nil) { self.navigationHandler(@"system.settings"); }
+    if (self.navigationHandler != nil && TiktigerIsSupportedNavigationRoute(TiktigerNavigationRouteSystemSettings)) { self.navigationHandler(TiktigerNavigationRouteSystemSettings); }
 }
 
 - (void)handleModuleNavigation:(TiktigerGlassRow *)sender {

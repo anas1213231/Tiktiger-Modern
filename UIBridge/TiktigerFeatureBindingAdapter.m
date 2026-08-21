@@ -35,22 +35,22 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
             @"ui": module[@"uiRepresentation"] ?: @{}
         }];
     }
-    return [cards copy];
+    return TiktigerDeepImmutableCopy([cards copy]);
 }
 
 - (NSDictionary<NSString *,NSArray<NSDictionary<NSString *,id> *> *> *)settingsFeatureControls {
-    return @{
+    return TiktigerDeepImmutableCopy(@{
         @"platform": @[@{ @"id": @"platform.secure-configuration", @"title": @"Secure Configuration", @"control": @"status" }],
         @"media": @[@{ @"id": @"media.download", @"title": @"Download Module", @"control": @"quality" }],
         @"theme": @[@{ @"id": @"user.preferences.theme", @"title": @"Theme", @"control": @"selection", @"key": @"theme" }],
         @"animation": @[@{ @"id": @"user.preferences.animation", @"title": @"Animation Settings", @"control": @"toggle", @"key": @"glow" }],
         @"interface": @[@{ @"id": @"user.preferences.interface", @"title": @"Interface Settings", @"control": @"selection", @"key": @"rtl" }],
         @"features": @[@{ @"id": @"user.preferences.features", @"title": @"Feature Preferences", @"control": @"toggle", @"key": @"haptics" }]
-    };
+    });
 }
 
 - (NSDictionary<NSString *,NSDictionary<NSString *,id> *> *)diagnosticsModuleHealth {
-    return self.moduleManager.healthSnapshot ?: @{};
+    return TiktigerRedactedDiagnosticCopy(self.moduleManager.healthSnapshot ?: @{});
 }
 
 - (NSDictionary<NSString *,id> *)downloadPresentationState {
@@ -63,27 +63,27 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
         if (strongSelf != nil) { [strongSelf postModuleEventForFeatureID:@"media.download" action:@"engineEvent"]; }
         (void)snapshot;
     }];
-    return [download downloadSnapshot];
+    return TiktigerDeepImmutableCopy([download downloadSnapshot]);
 }
 
 - (NSDictionary<NSString *,id> *)privacyPresentationState {
     id<TiktigerFeatureModuleProtocol> module = [self.moduleManager.registry moduleWithID:@"privacy.center"];
-    return [module respondsToSelector:@selector(privacySnapshot)] ? [(TiktigerPrivacyModule *)module privacySnapshot] : @{};
+    return [module respondsToSelector:@selector(privacySnapshot)] ? TiktigerDeepImmutableCopy([(TiktigerPrivacyModule *)module privacySnapshot]) : @{};
 }
 
 - (NSDictionary<NSString *,id> *)appearancePresentationState {
     id<TiktigerFeatureModuleProtocol> module = [self.moduleManager.registry moduleWithID:@"appearance.engine"];
-    return [module respondsToSelector:@selector(appearanceSnapshot)] ? [(TiktigerAppearanceModule *)module appearanceSnapshot] : @{};
+    return [module respondsToSelector:@selector(appearanceSnapshot)] ? TiktigerDeepImmutableCopy([(TiktigerAppearanceModule *)module appearanceSnapshot]) : @{};
 }
 
 - (NSDictionary<NSString *,id> *)chatPresentationState {
     id<TiktigerFeatureModuleProtocol> module = [self.moduleManager.registry moduleWithID:@"chat.center"];
-    return [module respondsToSelector:@selector(chatSnapshot)] ? [(TiktigerChatModule *)module chatSnapshot] : @{};
+    return [module respondsToSelector:@selector(chatSnapshot)] ? TiktigerDeepImmutableCopy([(TiktigerChatModule *)module chatSnapshot]) : @{};
 }
 
 - (NSDictionary<NSString *,id> *)profilePresentationState {
     id<TiktigerFeatureModuleProtocol> module = [self.moduleManager.registry moduleWithID:@"profile.center"];
-    return [module respondsToSelector:@selector(profileSnapshot)] ? [(TiktigerProfileModule *)module profileSnapshot] : @{};
+    return [module respondsToSelector:@selector(profileSnapshot)] ? TiktigerDeepImmutableCopy([(TiktigerProfileModule *)module profileSnapshot]) : @{};
 }
 
 - (NSDictionary<NSString *,id> *)systemPresentationState {
@@ -94,7 +94,7 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
     snapshot[@"featureManager"] = [system featureManagerSnapshot] ?: @{};
     snapshot[@"diagnosticsHub"] = [system diagnosticsHubSnapshot] ?: @{};
     snapshot[@"backup"] = [system backupExportSnapshot] ?: @{};
-    return [snapshot copy];
+    return TiktigerDeepImmutableCopy([snapshot copy]);
 }
 
 - (NSURL *)downloadHistoryFileURLForID:(NSString *)taskID error:(NSError **)error {
@@ -219,7 +219,7 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
 }
 
 - (void)postModuleEventForFeatureID:(NSString *)featureID action:(NSString *)action {
-    NSDictionary *event = @{
+    NSDictionary *event = TiktigerDeepImmutableCopy(@{
         @"featureID": featureID ?: @"",
         @"action": action ?: @"",
         @"download": [self downloadPresentationState] ?: @{},
@@ -230,7 +230,7 @@ static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.featu
         @"system": [self systemPresentationState] ?: @{},
         @"preferences": [self preferencesPresentation] ?: @{},
         @"health": [self diagnosticsModuleHealth] ?: @{}
-    };
+    });
     [[NSNotificationCenter defaultCenter] postNotificationName:TiktigerFeatureBindingEventDidChange object:self userInfo:event];
 }
 

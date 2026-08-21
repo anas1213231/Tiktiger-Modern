@@ -1,4 +1,5 @@
 #import "TiktigerAppearanceModule.h"
+#import "TiktigerFeatureRegistry.h"
 #import <UIKit/UIKit.h>
 
 static NSString * const TiktigerAppearanceModuleErrorDomain = @"com.tiktiger.appearance-module";
@@ -78,7 +79,8 @@ static NSString * const TiktigerAppearanceModuleErrorDomain = @"com.tiktiger.app
     if (![self validateAppearanceConfiguration:configuration error:&validationError]) {
         [self.appearanceLock lock];
         self.configuration = [self safeFallback];
-        [self.errors addObject:@{ @"category": @"validation", @"message": validationError.localizedDescription ?: @"Invalid appearance configuration." }];
+        [self.errors addObject:@{ @"category": @"validation", @"message": TiktigerRedactedDiagnosticString(validationError.localizedDescription ?: @"Invalid appearance configuration.") }];
+        if (self.errors.count > 100) { [self.errors removeObjectAtIndex:0]; }
         self.lastAction = @"fallback-applied";
         self.lastActionDate = [NSDate date];
         [self.appearanceLock unlock];
@@ -147,7 +149,7 @@ static NSString * const TiktigerAppearanceModuleErrorDomain = @"com.tiktiger.app
         @"migrationVersion": @(self.migrationVersion)
     };
     [self.appearanceLock unlock];
-    return snapshot;
+    return TiktigerDeepImmutableCopy(snapshot);
 }
 
 - (NSDictionary<NSString *, id> *)appearanceHealthSnapshot {
@@ -166,10 +168,10 @@ static NSString * const TiktigerAppearanceModuleErrorDomain = @"com.tiktiger.app
         @"lastAction": self.lastAction ?: @"unknown",
         @"lastActionDate": self.lastActionDate ?: [NSDate date],
         @"errorCount": @(self.errors.count),
-        @"error": error.localizedDescription ?: @""
+        @"error": TiktigerRedactedDiagnosticString(error.localizedDescription ?: @"")
     };
     [self.appearanceLock unlock];
-    return health;
+    return TiktigerDeepImmutableCopy(health);
 }
 
 - (NSDictionary<NSString *, id> *)healthCheck {

@@ -1,9 +1,21 @@
 #import "TiktigerSystemModule.h"
 #import "TiktigerModuleManager.h"
 #import "Tiktiger.h"
+#import <CommonCrypto/CommonDigest.h>
 
 static NSString * const TiktigerSystemModuleErrorDomain = @"com.tiktiger.system-module";
 static NSUInteger const TiktigerSystemSchemaVersion = 1;
+
+static NSDictionary<NSString *, id> *TiktigerSystemBackupSecurityPolicy(void) {
+    return @{
+        @"policyVersion": @1,
+        @"issuer": @"Tiktiger",
+        @"format": @"tiktiger.configuration-backup",
+        @"scope": @"configuration-only",
+        @"integrityAlgorithm": @"SHA-256",
+        @"signatureRequired": @NO
+    };
+}
 
 @interface TiktigerSystemModule ()
 @property (nonatomic, strong, readwrite) TiktigerModuleManager *moduleManager;
@@ -23,6 +35,7 @@ static NSUInteger const TiktigerSystemSchemaVersion = 1;
         @"backupSchemaVersion": @1,
         @"storageMode": @"runtime-observed",
         @"safeResetEnabled": @YES,
+        @"backupSecurityPolicy": TiktigerSystemBackupSecurityPolicy(),
         @"managedFeatureIDs": @[@"media.download", @"privacy.center", @"appearance.engine", @"chat.center", @"profile.center"]
     };
     self = [super initWithFeatureID:@"system.center" name:@"System Center" version:@"1.0" configuration:configuration uiRepresentation:@{@"surface": @"System Center", @"category": @"system"}];
@@ -37,11 +50,42 @@ static NSUInteger const TiktigerSystemSchemaVersion = 1;
     return self;
 }
 
+- (NSDictionary<NSString *, id> *)backupSecurityPolicy {
+    return TiktigerSystemBackupSecurityPolicy();
+}
+
+- (NSString *)backupDigestForConfiguration:(NSDictionary<NSString *, id> *)configuration managedFeatureIDs:(NSArray<NSString *> *)managedFeatureIDs {
+    NSDictionary *canonicalPayload = @{
+        @"systemConfiguration": configuration ?: @{},
+        @"managedFeatureIDs": managedFeatureIDs ?: @[]
+    };
+    NSData *canonicalData = [NSJSONSerialization dataWithJSONObject:canonicalPayload options:NSJSONWritingSortedKeys error:nil];
+    if (canonicalData.length == 0) { return @""; }
+    unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256(canonicalData.bytes, (CC_LONG)canonicalData.length, digest);
+    NSMutableString *hex = [[NSMutableString alloc] initWithCapacity:CC_SHA256_DIGEST_LENGTH * 2];
+    for (NSUInteger index = 0; index < CC_SHA256_DIGEST_LENGTH; index += 1) { [hex appendFormat:@"%02x", digest[index]]; }
+    return [hex copy];
+}
+
+- (void)recordSystemErrorCategory:(NSString *)category message:(NSString *)message {
+    NSDictionary *entry = @{
+        @"category": TiktigerRedactedDiagnosticString(category ?: @"system"),
+        @"message": TiktigerRedactedDiagnosticString(message ?: @""),
+        @"redacted": @YES
+    };
+    [self.systemLock lock];
+    [self.errors addObject:entry];
+    if (self.errors.count > 100) { [self.errors removeObjectAtIndex:0]; }
+    [self.systemLock unlock];
+}
+
 - (BOOL)validateSystemConfiguration:(NSDictionary<NSString *, id> *)candidate error:(NSError **)error {
     BOOL valid = [candidate[@"schemaVersion"] isKindOfClass:[NSNumber class]] && [candidate[@"schemaVersion"] unsignedIntegerValue] == TiktigerSystemSchemaVersion;
     valid = valid && [candidate[@"backupSchemaVersion"] isKindOfClass:[NSNumber class]] && [candidate[@"backupSchemaVersion"] unsignedIntegerValue] == 1;
     valid = valid && [candidate[@"storageMode"] isKindOfClass:[NSString class]] && [candidate[@"storageMode"] isEqualToString:@"runtime-observed"];
     valid = valid && [candidate[@"safeResetEnabled"] isKindOfClass:[NSNumber class]];
+    valid = valid && [candidate[@"backupSecurityPolicy"] isKindOfClass:[NSDictionary class]] && [candidate[@"backupSecurityPolicy"] isEqualToDictionary:[self backupSecurityPolicy]];
     NSArray *managedIDs = [candidate[@"managedFeatureIDs"] isKindOfClass:[NSArray class]] ? candidate[@"managedFeatureIDs"] : nil;
     NSArray *allowedIDs = @[@"media.download", @"privacy.center", @"appearance.engine", @"chat.center", @"profile.center"];
     valid = valid && managedIDs.count == allowedIDs.count;
@@ -58,6 +102,7 @@ static NSUInteger const TiktigerSystemSchemaVersion = 1;
         @"backupSchemaVersion": @1,
         @"storageMode": @"runtime-observed",
         @"safeResetEnabled": @YES,
+        @"backupSecurityPolicy": TiktigerSystemBackupSecurityPolicy(),
         @"managedFeatureIDs": @[@"media.download", @"privacy.center", @"appearance.engine", @"chat.center", @"profile.center"]
     };
 }
@@ -77,10 +122,10 @@ static NSUInteger const TiktigerSystemSchemaVersion = 1;
     if (![self validateSystemConfiguration:configuration error:&validationError]) {
         [self.systemLock lock];
         self.configuration = [self safeFallback];
-        [self.errors addObject:@{ @"category": @"validation", @"message": validationError.localizedDescription ?: @"Invalid system configuration." }];
         self.lastAction = @"fallback-applied";
         self.lastActionDate = [NSDate date];
         [self.systemLock unlock];
+        [self recordSystemErrorCategory:@"validation" message:validationError.localizedDescription ?: @"Invalid system configuration."];
         if (error != NULL) { *error = validationError; }
         return NO;
     }
@@ -117,7 +162,7 @@ static NSUInteger const TiktigerSystemSchemaVersion = 1;
         @"observed": @(fileSystemError == nil),
         @"totalBytes": total,
         @"freeBytes": free,
-        @"error": fileSystemError.localizedDescription ?: @""
+        @"error": TiktigerRedactedDiagnosticString(fileSystemError.localizedDescription ?: @"")
     };
 }
 
@@ -133,7 +178,7 @@ static NSUInteger const TiktigerSystemSchemaVersion = 1;
     NSMutableDictionary *health = [[NSMutableDictionary alloc] init];
     for (NSString *featureID in [self managedFeatureIDs]) {
         id<TiktigerFeatureModuleProtocol> managedModule = [self.moduleManager.registry moduleWithID:featureID];
-        if (managedModule != nil) { health[featureID] = [managedModule healthCheck] ?: @{}; }
+        if (managedModule != nil) { health[featureID] = TiktigerDeepImmutableCopy([managedModule healthCheck] ?: @{}); }
     }
     NSMutableArray *modules = [[NSMutableArray alloc] init];
     NSUInteger enabledCount = 0;
@@ -153,13 +198,13 @@ static NSUInteger const TiktigerSystemSchemaVersion = 1;
             @"health": healthEntry
         }];
     }
-    return @{
+    return TiktigerDeepImmutableCopy(@{
         @"moduleCount": @(modules.count),
         @"enabledCount": @(enabledCount),
         @"modules": [modules copy],
         @"statusSnapshot": status,
         @"healthSnapshot": health
-    };
+    });
 }
 
 - (NSDictionary<NSString *,id> *)diagnosticsHubSnapshot {
@@ -180,10 +225,11 @@ static NSUInteger const TiktigerSystemSchemaVersion = 1;
     }
     [self.systemLock lock];
     NSString *systemAction = self.lastAction ?: @"unknown";
+    NSArray *systemErrors = [self.errors copy] ?: @[];
     [self.systemLock unlock];
     [lastActions addObject:@{ @"featureID": @"system.center", @"action": systemAction }];
-    BOOL healthy = errors.count == 0;
-    return @{
+    BOOL healthy = errors.count == 0 && systemErrors.count == 0;
+    return TiktigerRedactedDiagnosticCopy(@{
         @"healthy": @(healthy),
         @"moduleCount": featureManager[@"moduleCount"] ?: @0,
         @"enabledCount": featureManager[@"enabledCount"] ?: @0,
@@ -191,8 +237,8 @@ static NSUInteger const TiktigerSystemSchemaVersion = 1;
         @"errors": [errors copy],
         @"lastActions": [lastActions copy],
         @"healthChecks": health,
-        @"systemErrors": [self.errors copy] ?: @[]
-    };
+        @"systemErrors": systemErrors
+    });
 }
 
 - (NSDictionary<NSString *,id> *)systemSnapshot {
@@ -208,7 +254,10 @@ static NSUInteger const TiktigerSystemSchemaVersion = 1;
     NSString *runtimeVersion = versionCString != NULL ? [NSString stringWithUTF8String:versionCString] : @"unknown";
     TiktigerRuntimeState runtimeState = TiktigerGetStatus();
     NSDictionary *diagnostics = [self diagnosticsHubSnapshot];
-    return @{
+    [self.systemLock lock];
+    NSUInteger systemErrorCount = self.errors.count;
+    [self.systemLock unlock];
+    return TiktigerDeepImmutableCopy(@{
         @"featureID": self.featureID,
         @"name": self.name,
         @"version": self.version,
@@ -230,29 +279,36 @@ static NSUInteger const TiktigerSystemSchemaVersion = 1;
         @"healthSummary": diagnostics,
         @"lastAction": lastAction,
         @"lastActionDate": lastActionDate,
-        @"errorCount": @(self.errors.count + [diagnostics[@"errors"] count]),
+        @"errorCount": @(systemErrorCount + [diagnostics[@"errors"] count]),
         @"migrationVersion": @(migrationVersion),
-        @"error": configurationError.localizedDescription ?: @""
-    };
+        @"error": TiktigerRedactedDiagnosticString(configurationError.localizedDescription ?: @"")
+    });
 }
 
 - (NSDictionary<NSString *,id> *)backupExportSnapshot {
     NSDictionary *system = [self systemSnapshot];
-    return @{
+    NSDictionary *configuration = system[@"configuration"] ?: [self safeFallback];
+    NSArray *managedFeatureIDs = [self managedFeatureIDs];
+    NSString *digest = [self backupDigestForConfiguration:configuration managedFeatureIDs:managedFeatureIDs];
+    return TiktigerDeepImmutableCopy(@{
         @"backupSchemaVersion": @1,
         @"format": @"tiktiger.configuration-backup",
         @"mode": @"configuration-export-only",
         @"sourceFeatureID": self.featureID,
         @"createdAt": [NSDate date],
-        @"systemConfiguration": system[@"configuration"] ?: [self safeFallback],
-        @"managedFeatureIDs": [self managedFeatureIDs],
+        @"systemConfiguration": configuration,
+        @"managedFeatureIDs": managedFeatureIDs,
+        @"authenticity": [self backupSecurityPolicy],
+        @"integrity": @{ @"algorithm": @"SHA-256", @"digest": digest },
         @"note": @"This structure contains configuration only; it does not export binaries, credentials, or target-app data."
-    };
+    });
 }
 
 - (BOOL)setManagedFeatureID:(NSString *)featureID enabled:(BOOL)enabled error:(NSError **)error {
     if (![[self managedFeatureIDs] containsObject:featureID]) {
-        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerSystemModuleErrorDomain code:4 userInfo:@{NSLocalizedDescriptionKey: @"The requested feature is not managed by System Center."}]; }
+        NSError *validationError = [NSError errorWithDomain:TiktigerSystemModuleErrorDomain code:4 userInfo:@{NSLocalizedDescriptionKey: @"The requested feature is not managed by System Center."}];
+        if (error != NULL) { *error = validationError; }
+        [self recordSystemErrorCategory:@"feature-manager" message:validationError.localizedDescription];
         return NO;
     }
     BOOL result = enabled ? [self.moduleManager enableModuleWithID:featureID error:error] : [self.moduleManager disableModuleWithID:featureID error:error];
@@ -267,14 +323,20 @@ static NSUInteger const TiktigerSystemSchemaVersion = 1;
 
 - (BOOL)importBackupPayload:(NSDictionary<NSString *,id> *)payload error:(NSError **)error {
     NSDictionary *configuration = [payload[@"systemConfiguration"] isKindOfClass:[NSDictionary class]] ? payload[@"systemConfiguration"] : nil;
-    BOOL valid = [payload[@"backupSchemaVersion"] isKindOfClass:[NSNumber class]] && [payload[@"backupSchemaVersion"] unsignedIntegerValue] == 1 && [payload[@"format"] isKindOfClass:[NSString class]] && [payload[@"format"] isEqualToString:@"tiktiger.configuration-backup"] && configuration != nil && [self validateSystemConfiguration:configuration error:nil];
+    NSArray *managedFeatureIDs = [payload[@"managedFeatureIDs"] isKindOfClass:[NSArray class]] ? payload[@"managedFeatureIDs"] : nil;
+    NSDictionary *authenticity = [payload[@"authenticity"] isKindOfClass:[NSDictionary class]] ? payload[@"authenticity"] : nil;
+    NSDictionary *integrity = [payload[@"integrity"] isKindOfClass:[NSDictionary class]] ? payload[@"integrity"] : nil;
+    NSString *expectedDigest = configuration != nil && managedFeatureIDs != nil ? [self backupDigestForConfiguration:configuration managedFeatureIDs:managedFeatureIDs] : @"";
+    BOOL integrityValid = [integrity[@"algorithm"] isEqualToString:@"SHA-256"] && [integrity[@"digest"] isKindOfClass:[NSString class]] && [integrity[@"digest"] isEqualToString:expectedDigest] && expectedDigest.length > 0;
+    BOOL valid = [payload[@"backupSchemaVersion"] isKindOfClass:[NSNumber class]] && [payload[@"backupSchemaVersion"] unsignedIntegerValue] == 1 && [payload[@"format"] isKindOfClass:[NSString class]] && [payload[@"format"] isEqualToString:@"tiktiger.configuration-backup"] && [payload[@"sourceFeatureID"] isEqualToString:self.featureID] && [authenticity isEqualToDictionary:[self backupSecurityPolicy]] && managedFeatureIDs != nil && [managedFeatureIDs isEqualToArray:[self managedFeatureIDs]] && configuration != nil && [self validateSystemConfiguration:configuration error:nil] && integrityValid;
     if (!valid) {
-        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerSystemModuleErrorDomain code:5 userInfo:@{NSLocalizedDescriptionKey: @"The backup payload failed safe import validation."}]; }
+        NSError *validationError = [NSError errorWithDomain:TiktigerSystemModuleErrorDomain code:5 userInfo:@{NSLocalizedDescriptionKey: @"The backup payload failed authenticity, integrity, or safe import validation."}];
+        if (error != NULL) { *error = validationError; }
         [self.systemLock lock];
-        [self.errors addObject:@{ @"category": @"backup-import", @"message": @"Invalid backup payload rejected." }];
         self.lastAction = @"backup-import-rejected";
         self.lastActionDate = [NSDate date];
         [self.systemLock unlock];
+        [self recordSystemErrorCategory:@"backup-import" message:validationError.localizedDescription];
         return NO;
     }
     BOOL result = [self applyConfiguration:configuration error:error];
@@ -292,7 +354,9 @@ static NSUInteger const TiktigerSystemSchemaVersion = 1;
     BOOL enabled = [self.configuration[@"safeResetEnabled"] boolValue];
     [self.systemLock unlock];
     if (!enabled) {
-        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerSystemModuleErrorDomain code:6 userInfo:@{NSLocalizedDescriptionKey: @"Safe reset is disabled by system configuration."}]; }
+        NSError *validationError = [NSError errorWithDomain:TiktigerSystemModuleErrorDomain code:6 userInfo:@{NSLocalizedDescriptionKey: @"Safe reset is disabled by system configuration."}];
+        if (error != NULL) { *error = validationError; }
+        [self recordSystemErrorCategory:@"safe-reset" message:validationError.localizedDescription];
         return NO;
     }
     BOOL result = [self applyConfiguration:[self safeFallback] error:error];

@@ -2,6 +2,76 @@
 
 static NSString * const TiktigerFeatureRegistryErrorDomain = @"com.tiktiger.features";
 
+id TiktigerDeepImmutableCopy(id object) {
+    if (object == nil || object == [NSNull null]) { return object; }
+    if ([object isKindOfClass:[NSDictionary class]]) {
+        NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:[object count]];
+        [object enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {
+            (void)stop;
+            id copiedKey = [key conformsToProtocol:@protocol(NSCopying)] ? [key copy] : key;
+            id copiedValue = TiktigerDeepImmutableCopy(value);
+            if (copiedKey != nil && copiedValue != nil) { result[copiedKey] = copiedValue; }
+        }];
+        return [result copy];
+    }
+    if ([object isKindOfClass:[NSArray class]]) {
+        NSMutableArray *result = [[NSMutableArray alloc] initWithCapacity:[object count]];
+        for (id value in object) { id copiedValue = TiktigerDeepImmutableCopy(value); if (copiedValue != nil) { [result addObject:copiedValue]; } }
+        return [result copy];
+    }
+    if ([object isKindOfClass:[NSSet class]]) {
+        NSMutableSet *result = [[NSMutableSet alloc] initWithCapacity:[object count]];
+        for (id value in object) { id copiedValue = TiktigerDeepImmutableCopy(value); if (copiedValue != nil) { [result addObject:copiedValue]; } }
+        return [result copy];
+    }
+    return [object conformsToProtocol:@protocol(NSCopying)] ? [object copy] : object;
+}
+
+NSString *TiktigerRedactedDiagnosticString(NSString *value) {
+    NSString *result = [value isKindOfClass:[NSString class]] ? value : @"";
+    NSArray<NSString *> *patterns = @[
+        @"https?://[^\\s\\]\\)\\}]+",
+        @"(?<![A-Za-z0-9])/(?:Users|private|var|tmp|home)/[^\\s\\]\\)\\}]+"
+    ];
+    for (NSString *pattern in patterns) {
+        NSRegularExpression *expression = [NSRegularExpression regularExpressionWithPattern:pattern options:NSRegularExpressionCaseInsensitive error:nil];
+        result = [expression stringByReplacingMatchesInString:result options:0 range:NSMakeRange(0, result.length) withTemplate:@"[redacted]"];
+    }
+    return [[result stringByReplacingOccurrencesOfString:@"\r" withString:@" "] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+}
+
+id TiktigerRedactedDiagnosticCopy(id object) {
+    if (object == nil || object == [NSNull null]) { return object; }
+    if ([object isKindOfClass:[NSDictionary class]]) {
+        NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:[object count]];
+        [object enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {
+            (void)stop;
+            id copiedKey = [key conformsToProtocol:@protocol(NSCopying)] ? [key copy] : key;
+            id copiedValue = TiktigerRedactedDiagnosticCopy(value);
+            if (copiedKey != nil && copiedValue != nil) { result[copiedKey] = copiedValue; }
+        }];
+        return TiktigerDeepImmutableCopy(result);
+    }
+    if ([object isKindOfClass:[NSArray class]]) {
+        NSMutableArray *result = [[NSMutableArray alloc] initWithCapacity:[object count]];
+        for (id value in object) { id copiedValue = TiktigerRedactedDiagnosticCopy(value); if (copiedValue != nil) { [result addObject:copiedValue]; } }
+        return TiktigerDeepImmutableCopy(result);
+    }
+    if ([object isKindOfClass:[NSString class]]) { return TiktigerRedactedDiagnosticString(object); }
+    return TiktigerDeepImmutableCopy(object);
+}
+
+NSDictionary<NSString *, id> *TiktigerRedactedErrorDictionary(NSError *error, NSString *category) {
+    if (error == nil) { return @{}; }
+    return @{
+        @"category": TiktigerRedactedDiagnosticString(category ?: @"general"),
+        @"domain": TiktigerRedactedDiagnosticString(error.domain),
+        @"code": @(error.code),
+        @"message": TiktigerRedactedDiagnosticString(error.localizedDescription),
+        @"redacted": @YES
+    };
+}
+
 @interface TiktigerFeatureRegistry ()
 @property (nonatomic, strong) NSMutableDictionary<NSString *, id<TiktigerFeatureProtocol>> *features;
 @property (nonatomic, strong) NSMutableDictionary<NSString *, id<TiktigerFeatureModuleProtocol>> *modules;
@@ -51,7 +121,7 @@ static NSString * const TiktigerFeatureRegistryErrorDomain = @"com.tiktiger.feat
     dispatch_sync(self.queue, ^{
         NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:self.features.count];
         [self.features enumerateKeysAndObjectsUsingBlock:^(NSString *key, id<TiktigerFeatureProtocol> feature, BOOL *stop) {
-            result[key] = @{ @"id": feature.featureID ?: @"", @"name": feature.name ?: @"", @"version": feature.version ?: @"", @"state": @(feature.state), @"configuration": feature.configuration ?: @{} };
+            result[key] = TiktigerDeepImmutableCopy(@{ @"id": feature.featureID ?: @"", @"name": feature.name ?: @"", @"version": feature.version ?: @"", @"state": @(feature.state), @"configuration": feature.configuration ?: @{} });
         }];
         snapshot = [result copy];
     });
@@ -107,7 +177,7 @@ static NSString * const TiktigerFeatureRegistryErrorDomain = @"com.tiktiger.feat
     dispatch_sync(self.queue, ^{
         NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:self.modules.count];
         [self.modules enumerateKeysAndObjectsUsingBlock:^(NSString *key, id<TiktigerFeatureModuleProtocol> module, BOOL *stop) {
-            result[key] = @{ @"id": module.featureID ?: @"", @"name": module.name ?: @"", @"version": module.version ?: @"", @"state": TiktigerStringFromFeatureModuleState(module.state), @"configuration": module.configuration ?: @{}, @"diagnostics": module.diagnostics ?: @{}, @"uiRepresentation": module.uiRepresentation ?: @{} };
+            result[key] = TiktigerDeepImmutableCopy(@{ @"id": module.featureID ?: @"", @"name": module.name ?: @"", @"version": module.version ?: @"", @"state": TiktigerStringFromFeatureModuleState(module.state), @"configuration": module.configuration ?: @{}, @"diagnostics": module.diagnostics ?: @{}, @"uiRepresentation": module.uiRepresentation ?: @{} });
         }];
         snapshot = [result copy];
     });
@@ -119,7 +189,7 @@ static NSString * const TiktigerFeatureRegistryErrorDomain = @"com.tiktiger.feat
     dispatch_sync(self.queue, ^{
         NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:self.modules.count];
         [self.modules enumerateKeysAndObjectsUsingBlock:^(NSString *key, id<TiktigerFeatureModuleProtocol> module, BOOL *stop) {
-            result[key] = [module healthCheck] ?: @{};
+            result[key] = TiktigerDeepImmutableCopy([module healthCheck] ?: @{});
         }];
         snapshot = [result copy];
     });

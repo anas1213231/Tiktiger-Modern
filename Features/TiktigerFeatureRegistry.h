@@ -4,6 +4,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+FOUNDATION_EXPORT id _Nullable TiktigerDeepImmutableCopy(id _Nullable object);
+FOUNDATION_EXPORT NSString *TiktigerRedactedDiagnosticString(NSString * _Nullable value);
+FOUNDATION_EXPORT id _Nullable TiktigerRedactedDiagnosticCopy(id _Nullable object);
+FOUNDATION_EXPORT NSDictionary<NSString *, id> *TiktigerRedactedErrorDictionary(NSError * _Nullable error, NSString * _Nullable category);
+
 @interface TiktigerFeatureRegistry : NSObject
 
 - (BOOL)registerFeature:(id<TiktigerFeatureProtocol>)feature error:(NSError * _Nullable * _Nullable)error;

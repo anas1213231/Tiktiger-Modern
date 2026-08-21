@@ -1,4 +1,5 @@
 #import "TiktigerChatModule.h"
+#import "TiktigerFeatureRegistry.h"
 
 static NSString * const TiktigerChatModuleErrorDomain = @"com.tiktiger.chat-module";
 
@@ -67,7 +68,8 @@ static NSString * const TiktigerChatModuleErrorDomain = @"com.tiktiger.chat-modu
     if (![self validateChatConfiguration:configuration error:&validationError]) {
         [self.chatLock lock];
         self.configuration = [self safeFallback];
-        [self.errors addObject:@{ @"category": @"validation", @"message": validationError.localizedDescription ?: @"Invalid chat configuration." }];
+        [self.errors addObject:@{ @"category": @"validation", @"message": TiktigerRedactedDiagnosticString(validationError.localizedDescription ?: @"Invalid chat configuration.") }];
+        if (self.errors.count > 100) { [self.errors removeObjectAtIndex:0]; }
         self.lastAction = @"fallback-applied";
         self.lastActionDate = [NSDate date];
         [self.chatLock unlock];
@@ -139,7 +141,7 @@ static NSString * const TiktigerChatModuleErrorDomain = @"com.tiktiger.chat-modu
         @"migrationVersion": @(self.migrationVersion)
     };
     [self.chatLock unlock];
-    return snapshot;
+    return TiktigerDeepImmutableCopy(snapshot);
 }
 
 - (NSDictionary<NSString *,id> *)chatHealthSnapshot {
@@ -158,10 +160,10 @@ static NSString * const TiktigerChatModuleErrorDomain = @"com.tiktiger.chat-modu
         @"lastAction": self.lastAction ?: @"unknown",
         @"lastActionDate": self.lastActionDate ?: [NSDate date],
         @"errorCount": @(self.errors.count),
-        @"error": error.localizedDescription ?: @""
+        @"error": TiktigerRedactedDiagnosticString(error.localizedDescription ?: @"")
     };
     [self.chatLock unlock];
-    return health;
+    return TiktigerDeepImmutableCopy(health);
 }
 
 - (NSDictionary<NSString *,id> *)healthCheck {

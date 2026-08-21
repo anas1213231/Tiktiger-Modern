@@ -1,10 +1,12 @@
 #import "TiktigerPreferencesModule.h"
+#import "TiktigerFeatureRegistry.h"
 
 static NSString * const TiktigerPreferencesModuleErrorDomain = @"com.tiktiger.preferences-module";
 
 @interface TiktigerPreferencesModule ()
 @property (nonatomic, copy, readwrite) NSDictionary<NSString *, id> *configuration;
 @property (nonatomic, strong) NSMutableArray<NSDictionary<NSString *, id> *> *errors;
+@property (nonatomic, strong) NSLock *preferencesLock;
 @property (nonatomic, assign) NSUInteger migrationVersion;
 @end
 
@@ -12,7 +14,11 @@ static NSString * const TiktigerPreferencesModuleErrorDomain = @"com.tiktiger.pr
 
 - (instancetype)initWithFeatureID:(NSString *)featureID name:(NSString *)name version:(NSString *)version configuration:(NSDictionary<NSString *,id> *)configuration uiRepresentation:(NSDictionary<NSString *,id> *)uiRepresentation {
     self = [super initWithFeatureID:featureID name:name version:version configuration:configuration uiRepresentation:uiRepresentation];
-    if (self) { _errors = [[NSMutableArray alloc] init]; _migrationVersion = 1; }
+    if (self) {
+        _errors = [[NSMutableArray alloc] init];
+        _preferencesLock = [[NSLock alloc] init];
+        _migrationVersion = 1;
+    }
     return self;
 }
 
@@ -46,36 +52,51 @@ static NSString * const TiktigerPreferencesModuleErrorDomain = @"com.tiktiger.pr
 }
 
 - (BOOL)updateTheme:(NSString *)theme error:(NSError **)error {
+    [self.preferencesLock lock];
     NSMutableDictionary *next = [self.configuration mutableCopy];
+    [self.preferencesLock unlock];
     next[@"theme"] = theme ?: @"black";
     return [self applyCandidate:next error:error];
 }
 
 - (BOOL)updateAnimationSettings:(NSDictionary<NSString *,id> *)settings error:(NSError **)error {
+    [self.preferencesLock lock];
     NSMutableDictionary *next = [self.configuration mutableCopy];
+    [self.preferencesLock unlock];
     next[@"animation"] = settings ?: @{};
     return [self applyCandidate:next error:error];
 }
 
 - (BOOL)updateInterfaceSettings:(NSDictionary<NSString *,id> *)settings error:(NSError **)error {
+    [self.preferencesLock lock];
     NSMutableDictionary *next = [self.configuration mutableCopy];
+    [self.preferencesLock unlock];
     next[@"interface"] = settings ?: @{};
     return [self applyCandidate:next error:error];
 }
 
 - (BOOL)updateFeaturePreferences:(NSDictionary<NSString *,id> *)preferences error:(NSError **)error {
+    [self.preferencesLock lock];
     NSMutableDictionary *next = [self.configuration mutableCopy];
+    [self.preferencesLock unlock];
     next[@"features"] = preferences ?: @{};
     return [self applyCandidate:next error:error];
 }
 
 - (BOOL)applyCandidate:(NSDictionary *)candidate error:(NSError **)error {
-    if (![self validatePreferences:candidate error:error]) {
-        [self.errors addObject:@{ @"message": error && *error ? (*error).localizedDescription : @"Invalid candidate", @"category": @"validation" }];
+    NSError *validationError = nil;
+    if (![self validatePreferences:candidate error:&validationError]) {
+        if (error != NULL) { *error = validationError; }
+        [self.preferencesLock lock];
+        [self.errors addObject:@{ @"message": TiktigerRedactedDiagnosticString(validationError.localizedDescription ?: @"Invalid candidate"), @"category": @"validation" }];
+        if (self.errors.count > 100) { [self.errors removeObjectAtIndex:0]; }
         self.configuration = [self fallbackPreferences];
+        [self.preferencesLock unlock];
         return NO;
     }
+    [self.preferencesLock lock];
     self.configuration = [candidate copy];
+    [self.preferencesLock unlock];
     return YES;
 }
 
@@ -94,7 +115,8 @@ static NSString * const TiktigerPreferencesModuleErrorDomain = @"com.tiktiger.pr
 }
 
 - (NSDictionary<NSString *,id> *)preferencesSnapshot {
-    return @{
+    [self.preferencesLock lock];
+    NSDictionary *snapshot = @{
         @"featureID": self.featureID,
         @"name": self.name,
         @"version": self.version,
@@ -103,12 +125,15 @@ static NSString * const TiktigerPreferencesModuleErrorDomain = @"com.tiktiger.pr
         @"errorCount": @(self.errors.count),
         @"migrationVersion": @(self.migrationVersion)
     };
+    [self.preferencesLock unlock];
+    return TiktigerDeepImmutableCopy(snapshot);
 }
 
 - (NSDictionary<NSString *,id> *)healthCheck {
+    [self.preferencesLock lock];
     NSError *error = nil;
     BOOL valid = [self validatePreferences:self.configuration error:&error];
-    return @{
+    NSDictionary *health = @{
         @"featureID": self.featureID,
         @"name": self.name,
         @"version": self.version,
@@ -116,8 +141,10 @@ static NSString * const TiktigerPreferencesModuleErrorDomain = @"com.tiktiger.pr
         @"healthy": @(valid),
         @"configurationState": valid ? @"valid" : @"fallback",
         @"errorCount": @(self.errors.count),
-        @"error": error.localizedDescription ?: @""
+        @"error": TiktigerRedactedDiagnosticString(error.localizedDescription ?: @"")
     };
+    [self.preferencesLock unlock];
+    return TiktigerDeepImmutableCopy(health);
 }
 
 @end

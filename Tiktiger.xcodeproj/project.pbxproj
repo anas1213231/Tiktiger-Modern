@@ -35,6 +35,7 @@
 		8BCEAB487800337781309D83 /* TiktigerDesignTokens.m in Sources */ = {isa = PBXBuildFile; fileRef = 74083CB440222E32F2E1E6CA /* TiktigerDesignTokens.m */; };
 		8D8AC93A3E27C2BD41989A99 /* TiktigerDownloadCenterView.m in Sources */ = {isa = PBXBuildFile; fileRef = DA9E9A949C6E9A4CD25C6CA8 /* TiktigerDownloadCenterView.m */; };
 		914830FB5B2B014EF95820B8 /* TiktigerPresentationContracts.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A95192D05ADBE1BF6F7120F /* TiktigerPresentationContracts.m */; };
+		E19A4B5C6D7E8F901234567E /* TiktigerNavigationContract.m in Sources */ = {isa = PBXBuildFile; fileRef = A29A4B5C6D7E8F9012345670 /* TiktigerNavigationContract.m */; };
 		931121D1C6EE0C896D2DEB37 /* TiktigerFeatureModuleDescriptor.m in Sources */ = {isa = PBXBuildFile; fileRef = 9EAA579750C0EAEF87AA0EFD /* TiktigerFeatureModuleDescriptor.m */; };
 		A1B3BD37803E8B82F341827F /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F49B36B4149F40CE9C07338 /* UIKit.framework */; };
 		A733F88DF1AE9172784F4DCC /* TiktigerFeatureBootstrap.m in Sources */ = {isa = PBXBuildFile; fileRef = EBC120589373D3D5ED25BA39 /* TiktigerFeatureBootstrap.m */; };
@@ -80,6 +81,8 @@
 		264FFED889116DFF499B0381 /* TiktigerFeatureBinding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerFeatureBinding.h; path = TiktigerFeatureBinding.h; sourceTree = "<group>"; };
 		26EBE42B8ADFF79E07772F1D /* TiktigerDownloadCenterViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerDownloadCenterViewController.m; path = TiktigerDownloadCenterViewController.m; sourceTree = "<group>"; };
 		2A95192D05ADBE1BF6F7120F /* TiktigerPresentationContracts.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerPresentationContracts.m; path = TiktigerPresentationContracts.m; sourceTree = "<group>"; };
+		F19A4B5C6D7E8F901234567F /* TiktigerNavigationContract.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerNavigationContract.h; path = TiktigerNavigationContract.h; sourceTree = "<group>"; };
+		A29A4B5C6D7E8F9012345670 /* TiktigerNavigationContract.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiktigerNavigationContract.m; path = TiktigerNavigationContract.m; sourceTree = "<group>"; };
 		2FCEE409D40C539FFCE5732D /* TiktigerGlassCard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerGlassCard.h; path = TiktigerGlassCard.h; sourceTree = "<group>"; };
 		3A83E765CC2C4CCFA80FFC18 /* TIKTIGER_GITHUB_BUILD_REPORT.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.markdown; name = TIKTIGER_GITHUB_BUILD_REPORT.md; path = TIKTIGER_GITHUB_BUILD_REPORT.md; sourceTree = "<group>"; };
 		3CBB9382A47B8F3464555AA2 /* TiktigerDashboardViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiktigerDashboardViewController.h; path = TiktigerDashboardViewController.h; sourceTree = "<group>"; };
@@ -394,8 +397,11 @@
 				1F9637AD938C1622D9EE10E4 /* TiktigerFeatureBindingAdapter.h */,
 				DBDC50AEC1CAA52875E62B6D /* TiktigerFeatureBindingAdapter.m */,
 				C8D1BFBC8691AB6B40776F23 /* TiktigerPresentationContracts.h */,
-				2A95192D05ADBE1BF6F7120F /* TiktigerPresentationContracts.m */,
-				E0F25D0B2E6A65506A41F5D5 /* TiktigerUIInterfaces.h */,
+							2A95192D05ADBE1BF6F7120F /* TiktigerPresentationContracts.m */,
+			F19A4B5C6D7E8F901234567F /* TiktigerNavigationContract.h */,
+			A29A4B5C6D7E8F9012345670 /* TiktigerNavigationContract.m */,
+			E0F25D0B2E6A65506A41F5D5 /* TiktigerUIInterfaces.h */,
+
 			);
 			name = UIBridge;
 			path = UIBridge;
@@ -541,7 +547,9 @@
 				5AB4B367D021A540C1ECF128 /* TiktigerStatusBadge.m in Sources */,
 				03CDC7B43E896393BA132E62 /* TiktigerToast.m in Sources */,
 				165829A4C3ED269B2C655CF7 /* TiktigerFeatureBindingAdapter.m in Sources */,
-				914830FB5B2B014EF95820B8 /* TiktigerPresentationContracts.m in Sources */,
+									914830FB5B2B014EF95820B8 /* TiktigerPresentationContracts.m in Sources */,
+					E19A4B5C6D7E8F901234567E /* TiktigerNavigationContract.m in Sources */,
+
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

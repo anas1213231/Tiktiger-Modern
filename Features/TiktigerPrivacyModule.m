@@ -1,4 +1,5 @@
 #import "TiktigerPrivacyModule.h"
+#import "TiktigerFeatureRegistry.h"
 
 static NSString * const TiktigerPrivacyModuleErrorDomain = @"com.tiktiger.privacy-module";
 
@@ -67,7 +68,8 @@ static NSString * const TiktigerPrivacyModuleErrorDomain = @"com.tiktiger.privac
     if (![self validatePrivacyConfiguration:configuration error:&validationError]) {
         [self.privacyLock lock];
         self.configuration = [self safeFallback];
-        [self.errors addObject:@{ @"category": @"validation", @"message": validationError.localizedDescription ?: @"Invalid privacy configuration." }];
+        [self.errors addObject:@{ @"category": @"validation", @"message": TiktigerRedactedDiagnosticString(validationError.localizedDescription ?: @"Invalid privacy configuration.") }];
+        if (self.errors.count > 100) { [self.errors removeObjectAtIndex:0]; }
         self.lastAction = @"fallback-applied";
         self.lastActionDate = [NSDate date];
         [self.privacyLock unlock];
@@ -141,7 +143,7 @@ static NSString * const TiktigerPrivacyModuleErrorDomain = @"com.tiktiger.privac
         @"migrationVersion": @(self.migrationVersion)
     };
     [self.privacyLock unlock];
-    return snapshot;
+    return TiktigerDeepImmutableCopy(snapshot);
 }
 
 - (NSDictionary<NSString *,id> *)privacyHealthSnapshot {
@@ -160,10 +162,10 @@ static NSString * const TiktigerPrivacyModuleErrorDomain = @"com.tiktiger.privac
         @"lastAction": self.lastAction ?: @"unknown",
         @"lastActionDate": self.lastActionDate ?: [NSDate date],
         @"errorCount": @(self.errors.count),
-        @"error": error.localizedDescription ?: @""
+        @"error": TiktigerRedactedDiagnosticString(error.localizedDescription ?: @"")
     };
     [self.privacyLock unlock];
-    return health;
+    return TiktigerDeepImmutableCopy(health);
 }
 
 - (NSDictionary<NSString *,id> *)healthCheck {

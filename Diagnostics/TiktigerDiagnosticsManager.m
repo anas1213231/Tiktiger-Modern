@@ -2,6 +2,7 @@
 
 @interface TiktigerDiagnosticsManager ()
 @property (nonatomic, strong) NSMutableDictionary<NSString *, id> *status;
+@property (nonatomic, strong) NSMutableArray<NSDictionary<NSString *, id> *> *errors;
 @property (nonatomic, strong) NSLock *lock;
 @end
 
@@ -11,6 +12,7 @@
     self = [super init];
     if (self) {
         _status = [[NSMutableDictionary alloc] init];
+        _errors = [[NSMutableArray alloc] init];
         _lock = [[NSLock alloc] init];
     }
     return self;
@@ -27,32 +29,33 @@
 
 - (void)updateFeatureStatus:(NSDictionary<NSString *,NSDictionary<NSString *,id> *> *)features {
     [self.lock lock];
-    self.status[@"features"] = [features copy] ?: @{};
+    self.status[@"features"] = TiktigerRedactedDiagnosticCopy(features ?: @{});
     [self.lock unlock];
 }
 
 - (void)updateConfigurationStatus:(NSDictionary<NSString *,id> *)configuration {
     [self.lock lock];
-    self.status[@"configuration"] = [configuration copy] ?: @{};
+    self.status[@"configuration"] = TiktigerRedactedDiagnosticCopy(configuration ?: @{});
     [self.lock unlock];
 }
 
 - (void)recordError:(NSError *)error category:(NSString *)category {
+    if (error == nil) { return; }
+    NSDictionary *redactedError = TiktigerRedactedErrorDictionary(error, category);
     [self.lock lock];
-    self.status[@"lastError"] = @{
-        @"category": category ?: @"general",
-        @"domain": error.domain ?: @"",
-        @"code": @(error.code),
-        @"message": error.localizedDescription ?: @""
-    };
+    [self.errors addObject:redactedError];
+    if (self.errors.count > 100) { [self.errors removeObjectAtIndex:0]; }
+    self.status[@"lastError"] = redactedError;
+    self.status[@"errors"] = [self.errors copy];
+    self.status[@"errorCount"] = @(self.errors.count);
     [self.lock unlock];
 }
 
 - (NSDictionary<NSString *,id> *)statusSnapshot {
     [self.lock lock];
-    NSDictionary *snapshot = [self.status copy];
+    NSDictionary *snapshot = TiktigerDeepImmutableCopy(self.status ?: @{});
     [self.lock unlock];
-    return snapshot;
+    return snapshot ?: @{};
 }
 
 @end
