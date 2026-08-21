@@ -81,7 +81,7 @@ static NSString * const TiktigerDownloadRecoveryErrorDomain = @"com.tiktiger.dow
 }
 
 - (NSError *)recoveryErrorWithCode:(NSInteger)code description:(NSString *)description {
-    return [NSError errorWithDomain:TiktigerDownloadRecoveryErrorDomain code:code userInfo:@{NSLocalizedDescriptionKey: description ?: @"Download recovery operation failed."]}];
+    return [NSError errorWithDomain:TiktigerDownloadRecoveryErrorDomain code:code userInfo:@{NSLocalizedDescriptionKey: description ?: @"Download recovery operation failed."}];
 }
 
 @end

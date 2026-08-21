@@ -408,7 +408,7 @@ typedef NS_ENUM(NSInteger, TiktigerDownloadTaskControlState) {
 }
 
 - (NSError *)engineErrorWithCode:(NSInteger)code description:(NSString *)description {
-    return [NSError errorWithDomain:TiktigerDownloadEngineErrorDomain code:code userInfo:@{NSLocalizedDescriptionKey: description ?: @"Download engine operation failed."]}];
+    return [NSError errorWithDomain:TiktigerDownloadEngineErrorDomain code:code userInfo:@{NSLocalizedDescriptionKey: description ?: @"Download engine operation failed."}];
 }
 
 - (void)dealloc {

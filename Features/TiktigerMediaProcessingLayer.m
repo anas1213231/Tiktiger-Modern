@@ -9,14 +9,14 @@ static NSString * const TiktigerMediaProcessingErrorDomain = @"com.tiktiger.medi
     BOOL validScheme = [sourceURL.scheme.lowercaseString isEqualToString:@"http"] || [sourceURL.scheme.lowercaseString isEqualToString:@"https"];
     if (sourceURL == nil || !validScheme || ![supportedTypes containsObject:mediaType.lowercaseString]) {
         if (error != NULL) {
-            *error = [NSError errorWithDomain:TiktigerMediaProcessingErrorDomain code:1 userInfo:@{NSLocalizedDescriptionKey: @"A valid HTTP(S) source URL and supported media type are required."]}];
+            *error = [NSError errorWithDomain:TiktigerMediaProcessingErrorDomain code:1 userInfo:@{NSLocalizedDescriptionKey: @"A valid HTTP(S) source URL and supported media type are required."}];
         }
         return NO;
     }
     NSString *detectedType = [self detectedMediaTypeForURL:sourceURL];
     if (![detectedType isEqualToString:@"unknown"] && ![detectedType isEqualToString:mediaType.lowercaseString]) {
         if (error != NULL) {
-            *error = [NSError errorWithDomain:TiktigerMediaProcessingErrorDomain code:5 userInfo:@{NSLocalizedDescriptionKey: @"The source URL extension does not match the requested media type."]}];
+            *error = [NSError errorWithDomain:TiktigerMediaProcessingErrorDomain code:5 userInfo:@{NSLocalizedDescriptionKey: @"The source URL extension does not match the requested media type."}];
         }
         return NO;
     }

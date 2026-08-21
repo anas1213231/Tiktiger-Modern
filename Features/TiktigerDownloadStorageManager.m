@@ -129,7 +129,7 @@ static NSString * const TiktigerDownloadStorageDuplicateURLKey = @"TiktigerDownl
 }
 
 - (NSError *)storageErrorWithCode:(NSInteger)code description:(NSString *)description {
-    return [NSError errorWithDomain:TiktigerDownloadStorageErrorDomain code:code userInfo:@{NSLocalizedDescriptionKey: description ?: @"Storage operation failed."]}];
+    return [NSError errorWithDomain:TiktigerDownloadStorageErrorDomain code:code userInfo:@{NSLocalizedDescriptionKey: description ?: @"Storage operation failed."}];
 }
 
 - (NSString *)sanitizedComponent:(NSString *)component fallback:(NSString *)fallback {

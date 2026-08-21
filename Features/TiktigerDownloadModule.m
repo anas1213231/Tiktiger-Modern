@@ -93,7 +93,7 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
         return NO;
     }
     if (![self isValidHTTPSourceURL:sourceURL]) {
-        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:9 userInfo:@{NSLocalizedDescriptionKey: @"An authorized HTTP(S) sourceURL is required to start a real download."]}]; }
+        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:9 userInfo:@{NSLocalizedDescriptionKey: @"An authorized HTTP(S) sourceURL is required to start a real download."}]; }
         return NO;
     }
     NSString *taskID = [NSUUID UUID].UUIDString;
@@ -135,7 +135,7 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
         [self.queue removeObject:item];
         self.currentItem = nil;
         self.downloadState = TiktigerDownloadStateFailed;
-        NSError *safeError = validationError ?: [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:10 userInfo:@{NSLocalizedDescriptionKey: @"Download engine rejected the task."]}];
+        NSError *safeError = validationError ?: [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:10 userInfo:@{NSLocalizedDescriptionKey: @"Download engine rejected the task."}];
         self.lastError = [self errorSnapshotFromError:safeError];
         [self.errors addObject:self.lastError];
         [self refreshQueueState];
@@ -150,7 +150,7 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
 - (BOOL)prepareNext:(NSError **)error {
     [self.downloadLock lock];
     if (self.queue.count == 0) {
-        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:4 userInfo:@{NSLocalizedDescriptionKey: @"No queued download is available."]}]; }
+        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:4 userInfo:@{NSLocalizedDescriptionKey: @"No queued download is available."}]; }
         self.downloadState = TiktigerDownloadStateFailed;
         [self refreshQueueState];
         [self.downloadLock unlock];
@@ -190,7 +190,7 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
     }
     NSString *destinationPath = [self.currentItem[@"destinationURL"] isKindOfClass:[NSString class]] ? self.currentItem[@"destinationURL"] : nil;
     if (destinationPath.length == 0 || ![[NSFileManager defaultManager] fileExistsAtPath:destinationPath]) {
-        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:15 userInfo:@{NSLocalizedDescriptionKey: @"Completion is controlled by the Download Engine after a real file is stored."]}]; }
+        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:15 userInfo:@{NSLocalizedDescriptionKey: @"Completion is controlled by the Download Engine after a real file is stored."}]; }
         [self.downloadLock unlock];
         return NO;
     }
@@ -232,7 +232,7 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
     if (!retried) {
         [self.downloadLock lock];
         self.downloadState = TiktigerDownloadStateFailed;
-        self.lastError = [self errorSnapshotFromError:retryError ?: [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:14 userInfo:@{NSLocalizedDescriptionKey: @"Download retry was rejected."]}];
+        self.lastError = [self errorSnapshotFromError:retryError ?: [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:14 userInfo:@{NSLocalizedDescriptionKey: @"Download retry was rejected."}];
         [self updateCurrentQueueItemWithState:@"failed" progress:self.progress];
         [self refreshQueueState];
         [self.downloadLock unlock];
