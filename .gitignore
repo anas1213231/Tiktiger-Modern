@@ -1,0 +1,23 @@
+# macOS and Xcode local metadata
+.DS_Store
+xcuserdata/
+*.xcuserstate
+
+# Xcode build products and derived data
+build/
+DerivedData/
+*.app/
+*.dSYM/
+*.xcarchive/
+
+# Tiktiger source repository must not track compiled or packaged artifacts
+*.dylib
+*.ipa
+*.framework
+*.a
+*.o
+*.so
+
+# Dependency manager build output (if introduced later)
+Pods/
+Carthage/Build/

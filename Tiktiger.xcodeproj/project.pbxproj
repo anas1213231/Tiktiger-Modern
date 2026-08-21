@@ -1,0 +1,1224 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+		03677F9747809040E50DCE08 /* TiktigerConfigurationManager.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = E51C36201D295251162528F3 /* TiktigerConfigurationManager.m */;
+		};
+		0588316849099337918E478C /* Public */ = {
+			isa = PBXGroup;
+			children = (
+				20170BD8A0BB25CFDAD65172,
+				B8A3D2337084572D591E1735,
+				941D718784B297A53B247F40,
+			);
+			name = "Public";
+			path = "Public";
+			sourceTree = "<group>";
+		};
+		0E8A3AD980EC179856012B7E /* Tiktiger */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EDAE30B22CE460A3113EAED2 /* Build configuration list for PBXNativeTarget */;
+			buildPhases = (
+				2A976C55E781D531D45C10A3 /* Sources */,
+				F2515A825D241B731852D012 /* Headers */,
+				68ED96E173B8E85EFF925036 /* Frameworks */,
+				D358F9953273580C5B97B1E2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Tiktiger;
+			productName = Tiktiger;
+			productReference = C1E686B41433AB7CCCC41482 /* Tiktiger.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+		14000BB654590252D906055E /* TiktigerFeatureRegistry.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerFeatureRegistry.h";
+			path = "Features/TiktigerFeatureRegistry.h";
+			sourceTree = "<group>";
+		};
+		18721BCB3229CA4CBB761070 /* TiktigerPresentationContracts.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerPresentationContracts.h";
+			path = "UIBridge/TiktigerPresentationContracts.h";
+			sourceTree = "<group>";
+		};
+		19B88A03AF2B84FA13BB645A /* TiktigerFeatureProtocol.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerFeatureProtocol.h";
+			path = "Features/TiktigerFeatureProtocol.h";
+			sourceTree = "<group>";
+		};
+		20170BD8A0BB25CFDAD65172 /* Tiktiger.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "Tiktiger.h";
+			path = "Public/Tiktiger.h";
+			sourceTree = "<group>";
+		};
+		22EA56DD29576E62BCCCA1AA /* Tiktiger */ = {
+			isa = PBXGroup;
+			children = (
+				B4961BEF8E1FCEB9EC35BDB0,
+				E13FE4EA165ACAC864118594,
+				4208812D7E4972296F946D95,
+				8E57D22BAE97D45CF2DD69BB,
+				9224040CCD1E3DC21A9FBAF7,
+				0588316849099337918E478C,
+				D96C0DA76EF6731F1792B518,
+				A511EC6FC8BCAFC6B21CD81D,
+				0F2612BBE722F8B97292B1A7 /* UI */,
+			);
+			name = "Tiktiger";
+			sourceTree = "<group>";
+		};
+		2654D7ED1010E6A33ABD610F /* TiktigerRuntimeState.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerRuntimeState.h";
+			path = "Core/TiktigerRuntimeState.h";
+			sourceTree = "<group>";
+		};
+		2A976C55E781D531D45C10A3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				772FF320B10594C9DF3E0F5A /* TiktigerRuntimeState.m in Sources */,
+				C7B060DC51749082617B6A51 /* TiktigerLifecycleManager.m in Sources */,
+				99BDFAB681C924BC3001C454 /* TiktigerFeatureRegistry.m in Sources */,
+				03677F9747809040E50DCE08 /* TiktigerConfigurationManager.m in Sources */,
+				531DDE21115B00759DBB5A8D /* TiktigerDiagnosticsManager.m in Sources */,
+				95E300E6349E8A38DE7A9B8E /* TiktigerPresentationContracts.m in Sources */,
+				EA771810E6669291563CAA17 /* Tiktiger.m in Sources */,
+				84C08D841F95BB41FE0CD784 /* TiktigerDesignTokens.m in Sources */,
+				55EF7432B4F219B5F6F47FC6 /* TiktigerMotionSystem.m in Sources */,
+				495AD824BCA2CC7B69205C86 /* TiktigerGlassCard.m in Sources */,
+				FA8D73EBD2EE4C2D51EAB1BA /* TiktigerGlassRow.m in Sources */,
+				E1E1DE9ED62532F03F45BE62 /* TiktigerGlassButton.m in Sources */,
+				C25015DD9BE97B4553BEB44F /* TiktigerGlassToggle.m in Sources */,
+				2C7108413DE7CFAC807E96CB /* TiktigerStatusBadge.m in Sources */,
+				ED6983FDD6AB7F9C93BB5105 /* TiktigerToast.m in Sources */,
+				AFC4F6A7881BA2D10F2F0CA7 /* TiktigerDashboardView.m in Sources */,
+				0F5D4A623CC0EED6113004A0 /* TiktigerDownloadCenterView.m in Sources */,
+				E4DADDBBF2C7272F1001E867 /* TiktigerSettingsView.m in Sources */,
+				47818147BC198E64C591B1E2 /* TiktigerDeveloperCard.m in Sources */,
+				C7233E4C2BC0B383FCD99EA8 /* TiktigerDashboardViewController.m in Sources */,
+				74C08C2E7760AAF6D2CC2039 /* TiktigerDownloadCenterViewController.m in Sources */,
+				06208ACAB5CAF6302CA26057 /* TiktigerSettingsViewController.m in Sources */,
+				FA710CDAD921A36FB20C7E19 /* TiktigerFeatureModuleProtocol.m in Sources */,
+				F7DF8AA016C329CD588ED0A5 /* TiktigerFeatureModuleDescriptor.m in Sources */,
+				77312FC3359AF0B9067FF039 /* TiktigerModuleManager.m in Sources */,
+				53531E00DF4ABD9818EECEFD /* TiktigerSecureConfigurationFeature.m in Sources */,
+				225C7B52C198E74F54829BBB /* TiktigerDiagnosticsCenterFeature.m in Sources */,
+				6DF08FA729AF7A3DA134AC26 /* TiktigerHealthMonitorFeature.m in Sources */,
+				C619908E1027E52AB174583B /* TiktigerDownloadFeature.m in Sources */,
+				6AB71A0D4563746A3BFA5281 /* TiktigerUserPreferencesFeature.m in Sources */,
+				26A5C4D73D28E93219F7A2DF /* TiktigerFeatureBootstrap.m in Sources */,
+				03339A72694D0E1506BDF846 /* TiktigerFeatureBindingAdapter.m in Sources */,
+				F018882D84F5A07F559F268F /* TiktigerFeatureStatusCard.m in Sources */,
+				2BEA7E1E316777143E067D38 /* TiktigerDiagnosticsCenterView.m in Sources */,
+				4AE2F55E725B216D496DC92B /* TiktigerFeatureControlsView.m in Sources */,
+				81861B29272909E8A1551071 /* TiktigerDownloadModule.m in Sources */,
+				D8FC209AEB074DA5845E3DAE /* TiktigerPreferencesModule.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4208812D7E4972296F946D95 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				7BCC5FA9CD14F09F5F93DFA1,
+				E51C36201D295251162528F3,
+			);
+			name = "Configuration";
+			path = "Configuration";
+			sourceTree = "<group>";
+		};
+		4739B368FFB6DED8B873A77E /* TiktigerRuntimeState.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerRuntimeState.m";
+			path = "Core/TiktigerRuntimeState.m";
+			sourceTree = "<group>";
+		};
+		531DDE21115B00759DBB5A8D /* TiktigerDiagnosticsManager.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = F95AA6B0571BE81277025F3B /* TiktigerDiagnosticsManager.m */;
+		};
+		5B66AB5D0C6795C09CA5853C /* TiktigerFeatureRegistry.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerFeatureRegistry.m";
+			path = "Features/TiktigerFeatureRegistry.m";
+			sourceTree = "<group>";
+		};
+		6804A5C7154BD2E8EF90293D /* TiktigerDiagnosticsManager.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerDiagnosticsManager.h";
+			path = "Diagnostics/TiktigerDiagnosticsManager.h";
+			sourceTree = "<group>";
+		};
+		68ED96E173B8E85EFF925036 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1F3767541D300BBE41817AEA /* UIKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		772FF320B10594C9DF3E0F5A /* TiktigerRuntimeState.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 4739B368FFB6DED8B873A77E /* TiktigerRuntimeState.m */;
+		};
+		7BCC5FA9CD14F09F5F93DFA1 /* TiktigerConfigurationManager.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerConfigurationManager.h";
+			path = "Configuration/TiktigerConfigurationManager.h";
+			sourceTree = "<group>";
+		};
+		85AA645773BCE4E9EA703D0F /* TIKTIGER_PHASE_3_REPORT.md */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = text.markdown;
+			name = "TIKTIGER_PHASE_3_REPORT.md";
+			path = "Documentation/TIKTIGER_PHASE_3_REPORT.md";
+			sourceTree = "<group>";
+		};
+		8E57D22BAE97D45CF2DD69BB /* Diagnostics */ = {
+			isa = PBXGroup;
+			children = (
+				6804A5C7154BD2E8EF90293D,
+				F95AA6B0571BE81277025F3B,
+				1F3767541D300BBE41817AEA /* UIKit.framework in Frameworks */,
+			);
+			name = "Diagnostics";
+			path = "Diagnostics";
+			sourceTree = "<group>";
+		};
+		91F2D8C4D39C74D961440ED0 /* Build configuration list for PBXProject */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D12546C7310DEE778E55E187 /* Debug */,
+				AA23A758EC6A71B7321371F8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9224040CCD1E3DC21A9FBAF7 /* UIBridge */ = {
+			isa = PBXGroup;
+			children = (
+				18721BCB3229CA4CBB761070,
+				AE73BFD9F09D9B13569F1254,
+				A3B1D04FF8A574D4A4065492,
+				AC1DF07F08F9B65458E4F71A /* TiktigerFeatureBinding.h */,
+				5F255F9194A5BF446D950320 /* TiktigerFeatureBindingAdapter.h */,
+				6F7A0DC368A121492848D251 /* TiktigerFeatureBindingAdapter.m */,
+			);
+			name = "UIBridge";
+			path = "UIBridge";
+			sourceTree = "<group>";
+		};
+		941D718784B297A53B247F40 /* TiktigerExportedSymbols.txt */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = text;
+			name = "TiktigerExportedSymbols.txt";
+			path = "Public/TiktigerExportedSymbols.txt";
+			sourceTree = "<group>";
+		};
+		95E300E6349E8A38DE7A9B8E /* TiktigerPresentationContracts.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = AE73BFD9F09D9B13569F1254 /* TiktigerPresentationContracts.m */;
+		};
+		98F54143AB4E86B28C3AFEE0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					0E8A3AD980EC179856012B7E = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 91F2D8C4D39C74D961440ED0 /* Build configuration list for PBXProject */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 22EA56DD29576E62BCCCA1AA;
+			productRefGroup = A511EC6FC8BCAFC6B21CD81D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0E8A3AD980EC179856012B7E,
+			);
+		};
+		99BDFAB681C924BC3001C454 /* TiktigerFeatureRegistry.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 5B66AB5D0C6795C09CA5853C /* TiktigerFeatureRegistry.m */;
+		};
+		A0D48479C8E3CBAA2F9F2493 /* TiktigerLifecycleManager.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerLifecycleManager.h";
+			path = "Core/TiktigerLifecycleManager.h";
+			sourceTree = "<group>";
+		};
+		A3B1D04FF8A574D4A4065492 /* TiktigerUIInterfaces.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerUIInterfaces.h";
+			path = "UIBridge/TiktigerUIInterfaces.h";
+			sourceTree = "<group>";
+		};
+		A511EC6FC8BCAFC6B21CD81D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C1E686B41433AB7CCCC41482 /* Tiktiger.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AA23A758EC6A71B7321371F8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Release;
+		};
+		AE73BFD9F09D9B13569F1254 /* TiktigerPresentationContracts.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerPresentationContracts.m";
+			path = "UIBridge/TiktigerPresentationContracts.m";
+			sourceTree = "<group>";
+		};
+		B0CF0E50D79955817990499A /* TIKTIGER_ARCHITECTURE_FOUNDATION.md */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = text.markdown;
+			name = "TIKTIGER_ARCHITECTURE_FOUNDATION.md";
+			path = "Documentation/TIKTIGER_ARCHITECTURE_FOUNDATION.md";
+			sourceTree = "<group>";
+		};
+		B4961BEF8E1FCEB9EC35BDB0 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				2654D7ED1010E6A33ABD610F,
+				4739B368FFB6DED8B873A77E,
+				A0D48479C8E3CBAA2F9F2493,
+				CAB15DFEAF8BCB9F38CB89FF,
+			);
+			name = "Core";
+			path = "Core";
+			sourceTree = "<group>";
+		};
+		B8A3D2337084572D591E1735 /* Tiktiger.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "Tiktiger.m";
+			path = "Public/Tiktiger.m";
+			sourceTree = "<group>";
+		};
+		C1E686B41433AB7CCCC41482 /* Tiktiger.dylib */ = {
+			isa = PBXFileReference;
+			includeInIndex = 0;
+			name = Tiktiger.dylib;
+			path = Tiktiger.dylib;
+			sourceTree = BUILT_PRODUCTS_DIR;
+			explicitFileType = "compiled.mach-o.dylib";
+		};
+		C7B060DC51749082617B6A51 /* TiktigerLifecycleManager.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = CAB15DFEAF8BCB9F38CB89FF /* TiktigerLifecycleManager.m */;
+		};
+		CAB15DFEAF8BCB9F38CB89FF /* TiktigerLifecycleManager.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerLifecycleManager.m";
+			path = "Core/TiktigerLifecycleManager.m";
+			sourceTree = "<group>";
+		};
+		D12546C7310DEE778E55E187 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		D358F9953273580C5B97B1E2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D96C0DA76EF6731F1792B518 /* Documentation */ = {
+			isa = PBXGroup;
+			children = (
+				B0CF0E50D79955817990499A,
+				85AA645773BCE4E9EA703D0F,
+			);
+			name = "Documentation";
+			path = "Documentation";
+			sourceTree = "<group>";
+		};
+		E13FE4EA165ACAC864118594 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				19B88A03AF2B84FA13BB645A,
+				14000BB654590252D906055E,
+				5B66AB5D0C6795C09CA5853C,
+				60FAD729D5823BE7D42F80F0 /* TiktigerFeatureModuleProtocol.h */,
+				8007F5707229BA200AB84699 /* TiktigerFeatureModuleProtocol.m */,
+				F28704FECC8BB1BDA644DF83 /* TiktigerFeatureModuleDescriptor.h */,
+				DCFE7C6F265919CA67211AC1 /* TiktigerFeatureModuleDescriptor.m */,
+				6B539C455953BAC5C18A8869 /* TiktigerModuleManager.h */,
+				E278A429DC05908E98874A52 /* TiktigerModuleManager.m */,
+				0BAF20ECC12955334C223FB8 /* TiktigerSecureConfigurationFeature.h */,
+				F9177E25E8EF8A8BBEC0C106 /* TiktigerSecureConfigurationFeature.m */,
+				0CF6C4FBC92EFB9CDC047310 /* TiktigerDiagnosticsCenterFeature.h */,
+				FB9EFB5254C42087E211E612 /* TiktigerDiagnosticsCenterFeature.m */,
+				51310BF39C536F13B86AC2CF /* TiktigerHealthMonitorFeature.h */,
+				C3CF302112B1F38BED142E7C /* TiktigerHealthMonitorFeature.m */,
+				CC88301292A6320E36833DE2 /* TiktigerDownloadFeature.h */,
+				62FD19E30D4C31B8B7640E63 /* TiktigerDownloadFeature.m */,
+				9D31662F5C126301E1D50C1B /* TiktigerUserPreferencesFeature.h */,
+				DE2C17714DBB30D3B3DC5F0A /* TiktigerUserPreferencesFeature.m */,
+				A846B483415707760E99FD16 /* TiktigerFeatureBootstrap.h */,
+				EFF3D770FBE46ADF61C00F51 /* TiktigerFeatureBootstrap.m */,
+				F5EDC38B2E6CD25A422A4654 /* TiktigerDownloadModule.h */,
+				236345B2C1CF4C55904BFCCF /* TiktigerDownloadModule.m */,
+				AD0FB0626437369E70873602 /* TiktigerPreferencesModule.h */,
+				894741A9CFEFB691903C413F /* TiktigerPreferencesModule.m */,
+			);
+			name = "Features";
+			path = "Features";
+			sourceTree = "<group>";
+		};
+		E1698793B8B09B32821D3120 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				VALID_ARCHS = arm64;
+				SUPPORTED_PLATFORMS = iphoneos;
+				SDKROOT = iphoneos;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				MACH_O_TYPE = mh_dylib;
+				PRODUCT_NAME = Tiktiger;
+				EXECUTABLE_PREFIX = ;
+				EXECUTABLE_SUFFIX = .dylib;
+				LD_DYLIB_INSTALL_NAME = @rpath/Tiktiger.dylib;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tiktiger.runtime;
+				DEFINES_MODULE = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				EXPORTED_SYMBOLS_FILE = $(SRCROOT)/Public/TiktigerExportedSymbols.txt;
+				HEADER_SEARCH_PATHS = $(SRCROOT);
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				ONLY_ACTIVE_ARCH = YES;
+			};
+			name = Debug;
+		};
+		E2B6CC459C96F3770518D010 /* Tiktiger.h in Headers */ = {
+			isa = PBXBuildFile;
+			fileRef = 20170BD8A0BB25CFDAD65172 /* Tiktiger.h */;
+			settings = { ATTRIBUTES = (Public, ); };
+		};
+		E51C36201D295251162528F3 /* TiktigerConfigurationManager.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerConfigurationManager.m";
+			path = "Configuration/TiktigerConfigurationManager.m";
+			sourceTree = "<group>";
+		};
+		EA771810E6669291563CAA17 /* Tiktiger.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = B8A3D2337084572D591E1735 /* Tiktiger.m */;
+		};
+		EDAE30B22CE460A3113EAED2 /* Build configuration list for PBXNativeTarget */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E1698793B8B09B32821D3120 /* Debug */,
+				FFACE85B9B63AB569355131D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F2515A825D241B731852D012 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2B6CC459C96F3770518D010 /* Tiktiger.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F95AA6B0571BE81277025F3B /* TiktigerDiagnosticsManager.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerDiagnosticsManager.m";
+			path = "Diagnostics/TiktigerDiagnosticsManager.m";
+			sourceTree = "<group>";
+		};
+		FFACE85B9B63AB569355131D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				VALID_ARCHS = arm64;
+				SUPPORTED_PLATFORMS = iphoneos;
+				SDKROOT = iphoneos;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				MACH_O_TYPE = mh_dylib;
+				PRODUCT_NAME = Tiktiger;
+				EXECUTABLE_PREFIX = ;
+				EXECUTABLE_SUFFIX = .dylib;
+				LD_DYLIB_INSTALL_NAME = @rpath/Tiktiger.dylib;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tiktiger.runtime;
+				DEFINES_MODULE = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				EXPORTED_SYMBOLS_FILE = $(SRCROOT)/Public/TiktigerExportedSymbols.txt;
+				HEADER_SEARCH_PATHS = $(SRCROOT);
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				DEBUG_INFORMATION_FORMAT = dwarf-with-dsym;
+				GCC_OPTIMIZATION_LEVEL = s;
+				ONLY_ACTIVE_ARCH = NO;
+			};
+			name = Release;
+		};
+		944A48FD910B381962D7980B /* TiktigerDesignTokens.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerDesignTokens.h";
+			path = "UI/TiktigerDesignTokens.h";
+			sourceTree = "<group>";
+		};
+		6A68DA36A438A538DE8591DB /* TiktigerDesignTokens.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerDesignTokens.m";
+			path = "UI/TiktigerDesignTokens.m";
+			sourceTree = "<group>";
+		};
+		93A88ED46D9CAA7224A1B6B9 /* TiktigerMotionSystem.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerMotionSystem.h";
+			path = "UI/TiktigerMotionSystem.h";
+			sourceTree = "<group>";
+		};
+		3CF7FB87357ABC3F701A25A9 /* TiktigerMotionSystem.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerMotionSystem.m";
+			path = "UI/TiktigerMotionSystem.m";
+			sourceTree = "<group>";
+		};
+		0C9283E7A10426760E7D1E51 /* TiktigerGlassCard.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerGlassCard.h";
+			path = "UI/TiktigerGlassCard.h";
+			sourceTree = "<group>";
+		};
+		D3F8898171538A38EC704597 /* TiktigerGlassCard.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerGlassCard.m";
+			path = "UI/TiktigerGlassCard.m";
+			sourceTree = "<group>";
+		};
+		19EDBF351298974C038498E5 /* TiktigerGlassRow.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerGlassRow.h";
+			path = "UI/TiktigerGlassRow.h";
+			sourceTree = "<group>";
+		};
+		C879920BD5171418694B6D2F /* TiktigerGlassRow.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerGlassRow.m";
+			path = "UI/TiktigerGlassRow.m";
+			sourceTree = "<group>";
+		};
+		1B5E101CBC8EBE7F0ABA6CCF /* TiktigerGlassButton.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerGlassButton.h";
+			path = "UI/TiktigerGlassButton.h";
+			sourceTree = "<group>";
+		};
+		5A7035C805C4401D1D871D6C /* TiktigerGlassButton.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerGlassButton.m";
+			path = "UI/TiktigerGlassButton.m";
+			sourceTree = "<group>";
+		};
+		82D994054ABA6160F2088F7B /* TiktigerGlassToggle.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerGlassToggle.h";
+			path = "UI/TiktigerGlassToggle.h";
+			sourceTree = "<group>";
+		};
+		578E7074870817D9C9E492EF /* TiktigerGlassToggle.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerGlassToggle.m";
+			path = "UI/TiktigerGlassToggle.m";
+			sourceTree = "<group>";
+		};
+		59E7D1EDB8FF6096C6276F38 /* TiktigerStatusBadge.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerStatusBadge.h";
+			path = "UI/TiktigerStatusBadge.h";
+			sourceTree = "<group>";
+		};
+		B954F2A80DBB6538064ECB9A /* TiktigerStatusBadge.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerStatusBadge.m";
+			path = "UI/TiktigerStatusBadge.m";
+			sourceTree = "<group>";
+		};
+		7F5D624F31BE748D5F6681D7 /* TiktigerToast.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerToast.h";
+			path = "UI/TiktigerToast.h";
+			sourceTree = "<group>";
+		};
+		71C3726A6CF7CFA17D941719 /* TiktigerToast.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerToast.m";
+			path = "UI/TiktigerToast.m";
+			sourceTree = "<group>";
+		};
+		F2F647B456D97835DA26D657 /* TiktigerDashboardView.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerDashboardView.h";
+			path = "UI/TiktigerDashboardView.h";
+			sourceTree = "<group>";
+		};
+		6926755BF0D9304600BD20CA /* TiktigerDashboardView.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerDashboardView.m";
+			path = "UI/TiktigerDashboardView.m";
+			sourceTree = "<group>";
+		};
+		F5452709036F75B3BE9C1E96 /* TiktigerDownloadCenterView.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerDownloadCenterView.h";
+			path = "UI/TiktigerDownloadCenterView.h";
+			sourceTree = "<group>";
+		};
+		9E8EB48E5C347BD3D1195F61 /* TiktigerDownloadCenterView.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerDownloadCenterView.m";
+			path = "UI/TiktigerDownloadCenterView.m";
+			sourceTree = "<group>";
+		};
+		CF1F29D476C230F3B4B5A3E9 /* TiktigerSettingsView.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerSettingsView.h";
+			path = "UI/TiktigerSettingsView.h";
+			sourceTree = "<group>";
+		};
+		4E54FA993766041A6A4E87FE /* TiktigerSettingsView.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerSettingsView.m";
+			path = "UI/TiktigerSettingsView.m";
+			sourceTree = "<group>";
+		};
+		FD5A17DE8D8B82BCCD557E19 /* TiktigerDeveloperCard.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerDeveloperCard.h";
+			path = "UI/TiktigerDeveloperCard.h";
+			sourceTree = "<group>";
+		};
+		8A298FA78C7B9B85CB6D6B55 /* TiktigerDeveloperCard.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerDeveloperCard.m";
+			path = "UI/TiktigerDeveloperCard.m";
+			sourceTree = "<group>";
+		};
+		C319526316CE7D8DB7EA25AB /* TiktigerDashboardViewController.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerDashboardViewController.h";
+			path = "UI/TiktigerDashboardViewController.h";
+			sourceTree = "<group>";
+		};
+		44D57183808875B5EE6F8971 /* TiktigerDashboardViewController.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerDashboardViewController.m";
+			path = "UI/TiktigerDashboardViewController.m";
+			sourceTree = "<group>";
+		};
+		096268047B3A05FE492B5F4D /* TiktigerDownloadCenterViewController.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerDownloadCenterViewController.h";
+			path = "UI/TiktigerDownloadCenterViewController.h";
+			sourceTree = "<group>";
+		};
+		315822FA77434C7EBEF7F80C /* TiktigerDownloadCenterViewController.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerDownloadCenterViewController.m";
+			path = "UI/TiktigerDownloadCenterViewController.m";
+			sourceTree = "<group>";
+		};
+		8E5E49FB3F7FE1DB4E1FBB4B /* TiktigerSettingsViewController.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerSettingsViewController.h";
+			path = "UI/TiktigerSettingsViewController.h";
+			sourceTree = "<group>";
+		};
+		F9FFA71AECF78778EC62BDAD /* TiktigerSettingsViewController.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerSettingsViewController.m";
+			path = "UI/TiktigerSettingsViewController.m";
+			sourceTree = "<group>";
+		};
+		6BE57CC8478DFCB22FD7BB98 /* TiktigerUI.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerUI.h";
+			path = "UI/TiktigerUI.h";
+			sourceTree = "<group>";
+		};
+		84C08D841F95BB41FE0CD784 /* TiktigerDesignTokens.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 6A68DA36A438A538DE8591DB /* TiktigerDesignTokens.m */;
+		};
+		55EF7432B4F219B5F6F47FC6 /* TiktigerMotionSystem.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 3CF7FB87357ABC3F701A25A9 /* TiktigerMotionSystem.m */;
+		};
+		495AD824BCA2CC7B69205C86 /* TiktigerGlassCard.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = D3F8898171538A38EC704597 /* TiktigerGlassCard.m */;
+		};
+		FA8D73EBD2EE4C2D51EAB1BA /* TiktigerGlassRow.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = C879920BD5171418694B6D2F /* TiktigerGlassRow.m */;
+		};
+		E1E1DE9ED62532F03F45BE62 /* TiktigerGlassButton.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 5A7035C805C4401D1D871D6C /* TiktigerGlassButton.m */;
+		};
+		C25015DD9BE97B4553BEB44F /* TiktigerGlassToggle.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 578E7074870817D9C9E492EF /* TiktigerGlassToggle.m */;
+		};
+		2C7108413DE7CFAC807E96CB /* TiktigerStatusBadge.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = B954F2A80DBB6538064ECB9A /* TiktigerStatusBadge.m */;
+		};
+		ED6983FDD6AB7F9C93BB5105 /* TiktigerToast.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 71C3726A6CF7CFA17D941719 /* TiktigerToast.m */;
+		};
+		AFC4F6A7881BA2D10F2F0CA7 /* TiktigerDashboardView.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 6926755BF0D9304600BD20CA /* TiktigerDashboardView.m */;
+		};
+		0F5D4A623CC0EED6113004A0 /* TiktigerDownloadCenterView.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 9E8EB48E5C347BD3D1195F61 /* TiktigerDownloadCenterView.m */;
+		};
+		E4DADDBBF2C7272F1001E867 /* TiktigerSettingsView.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 4E54FA993766041A6A4E87FE /* TiktigerSettingsView.m */;
+		};
+		47818147BC198E64C591B1E2 /* TiktigerDeveloperCard.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 8A298FA78C7B9B85CB6D6B55 /* TiktigerDeveloperCard.m */;
+		};
+		C7233E4C2BC0B383FCD99EA8 /* TiktigerDashboardViewController.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 44D57183808875B5EE6F8971 /* TiktigerDashboardViewController.m */;
+		};
+		74C08C2E7760AAF6D2CC2039 /* TiktigerDownloadCenterViewController.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 315822FA77434C7EBEF7F80C /* TiktigerDownloadCenterViewController.m */;
+		};
+		06208ACAB5CAF6302CA26057 /* TiktigerSettingsViewController.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = F9FFA71AECF78778EC62BDAD /* TiktigerSettingsViewController.m */;
+		};
+		0F2612BBE722F8B97292B1A7 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				944A48FD910B381962D7980B /* TiktigerDesignTokens.h */,
+				6A68DA36A438A538DE8591DB /* TiktigerDesignTokens.m */,
+				93A88ED46D9CAA7224A1B6B9 /* TiktigerMotionSystem.h */,
+				3CF7FB87357ABC3F701A25A9 /* TiktigerMotionSystem.m */,
+				0C9283E7A10426760E7D1E51 /* TiktigerGlassCard.h */,
+				D3F8898171538A38EC704597 /* TiktigerGlassCard.m */,
+				19EDBF351298974C038498E5 /* TiktigerGlassRow.h */,
+				C879920BD5171418694B6D2F /* TiktigerGlassRow.m */,
+				1B5E101CBC8EBE7F0ABA6CCF /* TiktigerGlassButton.h */,
+				5A7035C805C4401D1D871D6C /* TiktigerGlassButton.m */,
+				82D994054ABA6160F2088F7B /* TiktigerGlassToggle.h */,
+				578E7074870817D9C9E492EF /* TiktigerGlassToggle.m */,
+				59E7D1EDB8FF6096C6276F38 /* TiktigerStatusBadge.h */,
+				B954F2A80DBB6538064ECB9A /* TiktigerStatusBadge.m */,
+				7F5D624F31BE748D5F6681D7 /* TiktigerToast.h */,
+				71C3726A6CF7CFA17D941719 /* TiktigerToast.m */,
+				F2F647B456D97835DA26D657 /* TiktigerDashboardView.h */,
+				6926755BF0D9304600BD20CA /* TiktigerDashboardView.m */,
+				F5452709036F75B3BE9C1E96 /* TiktigerDownloadCenterView.h */,
+				9E8EB48E5C347BD3D1195F61 /* TiktigerDownloadCenterView.m */,
+				CF1F29D476C230F3B4B5A3E9 /* TiktigerSettingsView.h */,
+				4E54FA993766041A6A4E87FE /* TiktigerSettingsView.m */,
+				FD5A17DE8D8B82BCCD557E19 /* TiktigerDeveloperCard.h */,
+				8A298FA78C7B9B85CB6D6B55 /* TiktigerDeveloperCard.m */,
+				C319526316CE7D8DB7EA25AB /* TiktigerDashboardViewController.h */,
+				44D57183808875B5EE6F8971 /* TiktigerDashboardViewController.m */,
+				096268047B3A05FE492B5F4D /* TiktigerDownloadCenterViewController.h */,
+				315822FA77434C7EBEF7F80C /* TiktigerDownloadCenterViewController.m */,
+				8E5E49FB3F7FE1DB4E1FBB4B /* TiktigerSettingsViewController.h */,
+				F9FFA71AECF78778EC62BDAD /* TiktigerSettingsViewController.m */,
+				6BE57CC8478DFCB22FD7BB98 /* TiktigerUI.h */,
+				AFE565BD8169E7B85E5584F8 /* TiktigerFeatureStatusCard.h */,
+				8EA15A61FAD08663D2A6AC81 /* TiktigerFeatureStatusCard.m */,
+				CE8DB61C6CE83DC9B8B38FB3 /* TiktigerDiagnosticsCenterView.h */,
+				701C3D6AE85CF09308D872DD /* TiktigerDiagnosticsCenterView.m */,
+				DAD1E0D0F8A73D729BC09C9E /* TiktigerFeatureControlsView.h */,
+				88BCA3600BF2D6964C466E0F /* TiktigerFeatureControlsView.m */,
+			);
+			name = UI;
+			path = UI;
+			sourceTree = "<group>";
+		};
+		E840FDA5F3A1B76C0A0EEB5D /* UIKit.framework */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = wrapper.framework;
+			name = UIKit.framework;
+			path = System/Library/Frameworks/UIKit.framework;
+			sourceTree = SDKROOT;
+		};
+		1F3767541D300BBE41817AEA /* UIKit.framework in Frameworks */ = {
+			isa = PBXBuildFile;
+			fileRef = E840FDA5F3A1B76C0A0EEB5D /* UIKit.framework */;
+		};
+		60FAD729D5823BE7D42F80F0 /* TiktigerFeatureModuleProtocol.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerFeatureModuleProtocol.h";
+			path = "Features/TiktigerFeatureModuleProtocol.h";
+			sourceTree = "<group>";
+		};
+		8007F5707229BA200AB84699 /* TiktigerFeatureModuleProtocol.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerFeatureModuleProtocol.m";
+			path = "Features/TiktigerFeatureModuleProtocol.m";
+			sourceTree = "<group>";
+		};
+		F28704FECC8BB1BDA644DF83 /* TiktigerFeatureModuleDescriptor.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerFeatureModuleDescriptor.h";
+			path = "Features/TiktigerFeatureModuleDescriptor.h";
+			sourceTree = "<group>";
+		};
+		DCFE7C6F265919CA67211AC1 /* TiktigerFeatureModuleDescriptor.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerFeatureModuleDescriptor.m";
+			path = "Features/TiktigerFeatureModuleDescriptor.m";
+			sourceTree = "<group>";
+		};
+		6B539C455953BAC5C18A8869 /* TiktigerModuleManager.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerModuleManager.h";
+			path = "Features/TiktigerModuleManager.h";
+			sourceTree = "<group>";
+		};
+		E278A429DC05908E98874A52 /* TiktigerModuleManager.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerModuleManager.m";
+			path = "Features/TiktigerModuleManager.m";
+			sourceTree = "<group>";
+		};
+		0BAF20ECC12955334C223FB8 /* TiktigerSecureConfigurationFeature.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerSecureConfigurationFeature.h";
+			path = "Features/TiktigerSecureConfigurationFeature.h";
+			sourceTree = "<group>";
+		};
+		F9177E25E8EF8A8BBEC0C106 /* TiktigerSecureConfigurationFeature.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerSecureConfigurationFeature.m";
+			path = "Features/TiktigerSecureConfigurationFeature.m";
+			sourceTree = "<group>";
+		};
+		0CF6C4FBC92EFB9CDC047310 /* TiktigerDiagnosticsCenterFeature.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerDiagnosticsCenterFeature.h";
+			path = "Features/TiktigerDiagnosticsCenterFeature.h";
+			sourceTree = "<group>";
+		};
+		FB9EFB5254C42087E211E612 /* TiktigerDiagnosticsCenterFeature.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerDiagnosticsCenterFeature.m";
+			path = "Features/TiktigerDiagnosticsCenterFeature.m";
+			sourceTree = "<group>";
+		};
+		51310BF39C536F13B86AC2CF /* TiktigerHealthMonitorFeature.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerHealthMonitorFeature.h";
+			path = "Features/TiktigerHealthMonitorFeature.h";
+			sourceTree = "<group>";
+		};
+		C3CF302112B1F38BED142E7C /* TiktigerHealthMonitorFeature.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerHealthMonitorFeature.m";
+			path = "Features/TiktigerHealthMonitorFeature.m";
+			sourceTree = "<group>";
+		};
+		CC88301292A6320E36833DE2 /* TiktigerDownloadFeature.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerDownloadFeature.h";
+			path = "Features/TiktigerDownloadFeature.h";
+			sourceTree = "<group>";
+		};
+		62FD19E30D4C31B8B7640E63 /* TiktigerDownloadFeature.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerDownloadFeature.m";
+			path = "Features/TiktigerDownloadFeature.m";
+			sourceTree = "<group>";
+		};
+		9D31662F5C126301E1D50C1B /* TiktigerUserPreferencesFeature.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerUserPreferencesFeature.h";
+			path = "Features/TiktigerUserPreferencesFeature.h";
+			sourceTree = "<group>";
+		};
+		DE2C17714DBB30D3B3DC5F0A /* TiktigerUserPreferencesFeature.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerUserPreferencesFeature.m";
+			path = "Features/TiktigerUserPreferencesFeature.m";
+			sourceTree = "<group>";
+		};
+		A846B483415707760E99FD16 /* TiktigerFeatureBootstrap.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerFeatureBootstrap.h";
+			path = "Features/TiktigerFeatureBootstrap.h";
+			sourceTree = "<group>";
+		};
+		EFF3D770FBE46ADF61C00F51 /* TiktigerFeatureBootstrap.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerFeatureBootstrap.m";
+			path = "Features/TiktigerFeatureBootstrap.m";
+			sourceTree = "<group>";
+		};
+		AC1DF07F08F9B65458E4F71A /* TiktigerFeatureBinding.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerFeatureBinding.h";
+			path = "UIBridge/TiktigerFeatureBinding.h";
+			sourceTree = "<group>";
+		};
+		5F255F9194A5BF446D950320 /* TiktigerFeatureBindingAdapter.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerFeatureBindingAdapter.h";
+			path = "UIBridge/TiktigerFeatureBindingAdapter.h";
+			sourceTree = "<group>";
+		};
+		6F7A0DC368A121492848D251 /* TiktigerFeatureBindingAdapter.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerFeatureBindingAdapter.m";
+			path = "UIBridge/TiktigerFeatureBindingAdapter.m";
+			sourceTree = "<group>";
+		};
+		AFE565BD8169E7B85E5584F8 /* TiktigerFeatureStatusCard.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerFeatureStatusCard.h";
+			path = "UI/TiktigerFeatureStatusCard.h";
+			sourceTree = "<group>";
+		};
+		8EA15A61FAD08663D2A6AC81 /* TiktigerFeatureStatusCard.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerFeatureStatusCard.m";
+			path = "UI/TiktigerFeatureStatusCard.m";
+			sourceTree = "<group>";
+		};
+		CE8DB61C6CE83DC9B8B38FB3 /* TiktigerDiagnosticsCenterView.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerDiagnosticsCenterView.h";
+			path = "UI/TiktigerDiagnosticsCenterView.h";
+			sourceTree = "<group>";
+		};
+		701C3D6AE85CF09308D872DD /* TiktigerDiagnosticsCenterView.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerDiagnosticsCenterView.m";
+			path = "UI/TiktigerDiagnosticsCenterView.m";
+			sourceTree = "<group>";
+		};
+		DAD1E0D0F8A73D729BC09C9E /* TiktigerFeatureControlsView.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.h;
+			name = "TiktigerFeatureControlsView.h";
+			path = "UI/TiktigerFeatureControlsView.h";
+			sourceTree = "<group>";
+		};
+		88BCA3600BF2D6964C466E0F /* TiktigerFeatureControlsView.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerFeatureControlsView.m";
+			path = "UI/TiktigerFeatureControlsView.m";
+			sourceTree = "<group>";
+		};
+		FA710CDAD921A36FB20C7E19 /* TiktigerFeatureModuleProtocol.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 8007F5707229BA200AB84699 /* TiktigerFeatureModuleProtocol.m */;
+		};
+		F7DF8AA016C329CD588ED0A5 /* TiktigerFeatureModuleDescriptor.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = DCFE7C6F265919CA67211AC1 /* TiktigerFeatureModuleDescriptor.m */;
+		};
+		77312FC3359AF0B9067FF039 /* TiktigerModuleManager.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = E278A429DC05908E98874A52 /* TiktigerModuleManager.m */;
+		};
+		53531E00DF4ABD9818EECEFD /* TiktigerSecureConfigurationFeature.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = F9177E25E8EF8A8BBEC0C106 /* TiktigerSecureConfigurationFeature.m */;
+		};
+		225C7B52C198E74F54829BBB /* TiktigerDiagnosticsCenterFeature.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = FB9EFB5254C42087E211E612 /* TiktigerDiagnosticsCenterFeature.m */;
+		};
+		6DF08FA729AF7A3DA134AC26 /* TiktigerHealthMonitorFeature.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = C3CF302112B1F38BED142E7C /* TiktigerHealthMonitorFeature.m */;
+		};
+		C619908E1027E52AB174583B /* TiktigerDownloadFeature.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 62FD19E30D4C31B8B7640E63 /* TiktigerDownloadFeature.m */;
+		};
+		6AB71A0D4563746A3BFA5281 /* TiktigerUserPreferencesFeature.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = DE2C17714DBB30D3B3DC5F0A /* TiktigerUserPreferencesFeature.m */;
+		};
+		26A5C4D73D28E93219F7A2DF /* TiktigerFeatureBootstrap.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = EFF3D770FBE46ADF61C00F51 /* TiktigerFeatureBootstrap.m */;
+		};
+		03339A72694D0E1506BDF846 /* TiktigerFeatureBindingAdapter.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 6F7A0DC368A121492848D251 /* TiktigerFeatureBindingAdapter.m */;
+		};
+		F018882D84F5A07F559F268F /* TiktigerFeatureStatusCard.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 8EA15A61FAD08663D2A6AC81 /* TiktigerFeatureStatusCard.m */;
+		};
+		2BEA7E1E316777143E067D38 /* TiktigerDiagnosticsCenterView.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 701C3D6AE85CF09308D872DD /* TiktigerDiagnosticsCenterView.m */;
+		};
+		4AE2F55E725B216D496DC92B /* TiktigerFeatureControlsView.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 88BCA3600BF2D6964C466E0F /* TiktigerFeatureControlsView.m */;
+		};
+		F5EDC38B2E6CD25A422A4654 /* TiktigerDownloadModule.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerDownloadModule.h";
+			path = "Features/TiktigerDownloadModule.h";
+			sourceTree = "<group>";
+		};
+		236345B2C1CF4C55904BFCCF /* TiktigerDownloadModule.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerDownloadModule.m";
+			path = "Features/TiktigerDownloadModule.m";
+			sourceTree = "<group>";
+		};
+		AD0FB0626437369E70873602 /* TiktigerPreferencesModule.h */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerPreferencesModule.h";
+			path = "Features/TiktigerPreferencesModule.h";
+			sourceTree = "<group>";
+		};
+		894741A9CFEFB691903C413F /* TiktigerPreferencesModule.m */ = {
+			isa = PBXFileReference;
+			fileEncoding = 4;
+			lastKnownFileType = sourcecode.c.objc;
+			name = "TiktigerPreferencesModule.m";
+			path = "Features/TiktigerPreferencesModule.m";
+			sourceTree = "<group>";
+		};
+		81861B29272909E8A1551071 /* TiktigerDownloadModule.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 236345B2C1CF4C55904BFCCF /* TiktigerDownloadModule.m */;
+		};
+		D8FC209AEB074DA5845E3DAE /* TiktigerPreferencesModule.m in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 894741A9CFEFB691903C413F /* TiktigerPreferencesModule.m */;
+		};
+	};
+	rootObject = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+}

@@ -1,0 +1,145 @@
+#import "TiktigerFeatureBindingAdapter.h"
+#import "TiktigerModuleManager.h"
+#import "TiktigerDownloadModule.h"
+#import "TiktigerPreferencesModule.h"
+#import "TiktigerFeatureModuleDescriptor.h"
+
+NSString * const TiktigerFeatureBindingEventDidChange = @"com.tiktiger.feature-binding.did-change";
+static NSString * const TiktigerFeatureBindingErrorDomain = @"com.tiktiger.feature-binding";
+
+@interface TiktigerFeatureBindingAdapter ()
+@property (nonatomic, strong) TiktigerModuleManager *moduleManager;
+@end
+
+@implementation TiktigerFeatureBindingAdapter
+
+- (instancetype)initWithModuleManager:(TiktigerModuleManager *)moduleManager {
+    self = [super init];
+    if (self) { _moduleManager = moduleManager; }
+    return self;
+}
+
+- (NSArray<NSDictionary<NSString *,id> *> *)dashboardFeatureCards {
+    NSMutableArray *cards = [[NSMutableArray alloc] init];
+    for (NSDictionary *module in self.moduleManager.statusSnapshot.allValues) {
+        [cards addObject:@{
+            @"id": module[@"id"] ?: @"",
+            @"title": module[@"name"] ?: @"Feature",
+            @"version": module[@"version"] ?: @"",
+            @"state": module[@"state"] ?: @"unknown",
+            @"ui": module[@"uiRepresentation"] ?: @{}
+        }];
+    }
+    return [cards copy];
+}
+
+- (NSDictionary<NSString *,NSArray<NSDictionary<NSString *,id> *> *> *)settingsFeatureControls {
+    return @{
+        @"platform": @[@{ @"id": @"platform.secure-configuration", @"title": @"Secure Configuration", @"control": @"status" }],
+        @"media": @[@{ @"id": @"media.download", @"title": @"Download Module", @"control": @"quality" }],
+        @"theme": @[@{ @"id": @"user.preferences.theme", @"title": @"Theme", @"control": @"selection", @"key": @"theme" }],
+        @"animation": @[@{ @"id": @"user.preferences.animation", @"title": @"Animation Settings", @"control": @"toggle", @"key": @"glow" }],
+        @"interface": @[@{ @"id": @"user.preferences.interface", @"title": @"Interface Settings", @"control": @"selection", @"key": @"rtl" }],
+        @"features": @[@{ @"id": @"user.preferences.features", @"title": @"Feature Preferences", @"control": @"toggle", @"key": @"haptics" }]
+    };
+}
+
+- (NSDictionary<NSString *,NSDictionary<NSString *,id> *> *)diagnosticsModuleHealth {
+    return self.moduleManager.healthSnapshot ?: @{};
+}
+
+- (NSDictionary<NSString *,id> *)downloadPresentationState {
+    id<TiktigerFeatureModuleProtocol> module = [self.moduleManager.registry moduleWithID:@"media.download"];
+    return [module respondsToSelector:@selector(downloadSnapshot)] ? [(TiktigerDownloadModule *)module downloadSnapshot] : @{};
+}
+
+- (NSDictionary<NSString *,id> *)preferencesPresentation {
+    id<TiktigerFeatureModuleProtocol> module = [self.moduleManager.registry moduleWithID:@"user.preferences"];
+    return [module respondsToSelector:@selector(preferencesSnapshot)] ? [(TiktigerPreferencesModule *)module preferencesSnapshot] : @{};
+}
+
+- (BOOL)setFeature:(NSString *)featureID enabled:(BOOL)enabled error:(NSError **)error {
+    BOOL result = enabled ? [self.moduleManager enableModuleWithID:featureID error:error] : [self.moduleManager disableModuleWithID:featureID error:error];
+    if (result) { [self postModuleEventForFeatureID:featureID action:enabled ? @"enable" : @"disable"]; }
+    return result;
+}
+
+- (BOOL)updateFeatureConfiguration:(NSString *)featureID configuration:(NSDictionary<NSString *,id> *)configuration error:(NSError **)error {
+    id<TiktigerFeatureModuleProtocol> module = [self.moduleManager.registry moduleWithID:featureID];
+    if (![module isKindOfClass:[TiktigerFeatureModuleDescriptor class]]) {
+        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerFeatureBindingErrorDomain code:1 userInfo:@{NSLocalizedDescriptionKey: @"The requested module does not accept configuration updates."}]; }
+        return NO;
+    }
+    BOOL result = [(TiktigerFeatureModuleDescriptor *)module applyConfiguration:configuration error:error];
+    if (result) { [self postModuleEventForFeatureID:featureID action:@"updateConfiguration"]; }
+    return result;
+}
+
+- (BOOL)executeFeatureAction:(NSString *)action featureID:(NSString *)featureID payload:(NSDictionary<NSString *,id> *)payload error:(NSError **)error {
+    id<TiktigerFeatureModuleProtocol> module = [self.moduleManager.registry moduleWithID:featureID];
+    if (module == nil) {
+        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerFeatureBindingErrorDomain code:2 userInfo:@{NSLocalizedDescriptionKey: @"The requested feature module is not registered."}]; }
+        return NO;
+    }
+    BOOL result = NO;
+    if (([action isEqualToString:@"startDownload"] || [action isEqualToString:@"updateConfiguration"]) && module.state != TiktigerFeatureModuleStateEnabled) {
+        if (![module enable:error]) { return NO; }
+    }
+    if ([action isEqualToString:@"startDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
+        NSString *mediaType = payload[@"mediaType"] ?: @"video";
+        NSString *destination = payload[@"destination"] ?: @"files";
+        result = [(TiktigerDownloadModule *)module enqueueMediaType:mediaType destination:destination error:error];
+        if (result) { result = [(TiktigerDownloadModule *)module prepareNext:error]; }
+    } else if ([action isEqualToString:@"updateProgress"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
+        result = [(TiktigerDownloadModule *)module updateProgress:[payload[@"progress"] doubleValue] error:error];
+    } else if ([action isEqualToString:@"completeDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
+        result = [(TiktigerDownloadModule *)module completeCurrent:error];
+    } else if ([action isEqualToString:@"retryDownload"] && [module isKindOfClass:[TiktigerDownloadModule class]]) {
+        result = [(TiktigerDownloadModule *)module retryCurrent:error];
+    } else if ([action isEqualToString:@"updateConfiguration"] && [module isKindOfClass:[TiktigerPreferencesModule class]]) {
+        NSString *controlID = payload[@"controlID"] ?: @"";
+        NSString *key = payload[@"key"] ?: @"";
+        id value = payload[@"value"] ?: @NO;
+        TiktigerPreferencesModule *preferences = (TiktigerPreferencesModule *)module;
+        NSDictionary *configuration = preferences.preferencesSnapshot[@"configuration"] ?: @{};
+        NSMutableDictionary *next = [configuration mutableCopy];
+        if ([controlID containsString:@"animation"]) {
+            NSMutableDictionary *section = [configuration[@"animation"] mutableCopy] ?: [NSMutableDictionary dictionary]; section[key] = value; next[@"animation"] = section; result = [preferences updateAnimationSettings:section error:error];
+        } else if ([controlID containsString:@"interface"]) {
+            NSMutableDictionary *section = [configuration[@"interface"] mutableCopy] ?: [NSMutableDictionary dictionary]; section[key] = value; next[@"interface"] = section; result = [preferences updateInterfaceSettings:section error:error];
+        } else if ([controlID containsString:@"features"]) {
+            NSMutableDictionary *section = [configuration[@"features"] mutableCopy] ?: [NSMutableDictionary dictionary]; section[key] = value; next[@"features"] = section; result = [preferences updateFeaturePreferences:section error:error];
+        } else if ([controlID containsString:@"theme"]) {
+            result = [preferences updateTheme:[value isKindOfClass:[NSString class]] ? value : @"black" error:error];
+        } else {
+            if (error != NULL) { *error = [NSError errorWithDomain:TiktigerFeatureBindingErrorDomain code:3 userInfo:@{NSLocalizedDescriptionKey: @"The preferences control is not mapped to a supported section."}]; }
+        }
+    } else {
+        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerFeatureBindingErrorDomain code:4 userInfo:@{NSLocalizedDescriptionKey: @"Unsupported feature action."}]; }
+    }
+    if (result) { [self postModuleEventForFeatureID:featureID action:action]; }
+    return result;
+}
+
+- (id)subscribeToModuleEvents:(void (^)(NSDictionary<NSString *,id> *))handler {
+    return [[NSNotificationCenter defaultCenter] addObserverForName:TiktigerFeatureBindingEventDidChange object:self queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+        if (handler != nil) { handler(note.userInfo ?: @{}); }
+    }];
+}
+
+- (void)unsubscribeFromModuleEvents:(id)token {
+    if (token != nil) { [[NSNotificationCenter defaultCenter] removeObserver:token]; }
+}
+
+- (void)postModuleEventForFeatureID:(NSString *)featureID action:(NSString *)action {
+    NSDictionary *event = @{
+        @"featureID": featureID ?: @"",
+        @"action": action ?: @"",
+        @"download": [self downloadPresentationState] ?: @{},
+        @"preferences": [self preferencesPresentation] ?: @{},
+        @"health": [self diagnosticsModuleHealth] ?: @{}
+    };
+    [[NSNotificationCenter defaultCenter] postNotificationName:TiktigerFeatureBindingEventDidChange object:self userInfo:event];
+}
+
+@end

@@ -1,0 +1,161 @@
+name: Build Tiktiger Dynamic Library
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tiktiger-dylib-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Tiktiger.dylib (Release)
+    runs-on: macos-latest
+    env:
+      PROJECT: Tiktiger.xcodeproj
+      SCHEME: Tiktiger
+      CONFIGURATION: Release
+      DERIVED_DATA: ${{ github.workspace }}/DerivedData
+      EXPECTED_INSTALL_NAME: '@rpath/Tiktiger.dylib'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Select Xcode
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Available Xcode installations:"
+          ls -1d /Applications/Xcode*.app 2>/dev/null || true
+          if [[ -n "${XCODE_VERSION:-}" ]]; then
+            sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app"
+          else
+            sudo xcode-select -s /Applications/Xcode.app
+          fi
+          xcode-select -p
+          xcodebuild -version
+
+      - name: Validate project structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$PROJECT/project.pbxproj"
+          test -f "$PROJECT/xcshareddata/xcschemes/Tiktiger.xcscheme"
+          test -f Public/Tiktiger.h
+          test -f Public/TiktigerExportedSymbols.txt
+          grep -q 'com.apple.product-type.library.dynamic' "$PROJECT/project.pbxproj"
+          grep -q 'PRODUCT_NAME = Tiktiger;' "$PROJECT/project.pbxproj"
+          grep -q 'EXECUTABLE_SUFFIX = .dylib;' "$PROJECT/project.pbxproj"
+          grep -q 'MACH_O_TYPE = mh_dylib;' "$PROJECT/project.pbxproj"
+          grep -q 'LD_DYLIB_INSTALL_NAME = @rpath/Tiktiger.dylib;' "$PROJECT/project.pbxproj"
+          grep -q 'ARCHS = arm64;' "$PROJECT/project.pbxproj"
+          grep -q 'IPHONEOS_DEPLOYMENT_TARGET = 14.0;' "$PROJECT/project.pbxproj"
+          grep -q 'UIKit.framework' "$PROJECT/project.pbxproj"
+
+      - name: Build Release Dynamic Library
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration "$CONFIGURATION" \
+            -sdk iphoneos \
+            -arch arm64 \
+            -derivedDataPath "$DERIVED_DATA" \
+            ONLY_ACTIVE_ARCH=NO \
+            clean build
+
+      - name: Locate Tiktiger.dylib
+        id: locate
+        shell: bash
+        run: |
+          set -euo pipefail
+          DYNAMIC_LIBRARY="$(find "$DERIVED_DATA/Build/Products" -type f -name 'Tiktiger.dylib' -print -quit)"
+          test -n "$DYNAMIC_LIBRARY"
+          test -f "$DYNAMIC_LIBRARY"
+          echo "path=$DYNAMIC_LIBRARY" >> "$GITHUB_OUTPUT"
+          echo "Tiktiger.dylib located at: $DYNAMIC_LIBRARY"
+
+      - name: Validate Mach-O output
+        shell: bash
+        env:
+          DYNAMIC_LIBRARY: ${{ steps.locate.outputs.path }}
+        run: |
+          set -euo pipefail
+          REPORT="${{ github.workspace }}/TIKTIGER_GITHUB_BUILD_REPORT.md"
+          : > "$REPORT"
+          {
+            echo '# Tiktiger GitHub Build Report'
+            echo
+            echo "- Workflow run: $GITHUB_RUN_ID"
+            echo "- Runner: $RUNNER_OS"
+            echo "- Xcode: $(xcodebuild -version | tr '\\n' ' ')"
+            echo "- Project: $PROJECT"
+            echo "- Scheme: $SCHEME"
+            echo "- Configuration: $CONFIGURATION"
+            echo "- Artifact path: $DYNAMIC_LIBRARY"
+            echo
+            echo '## Build result'
+            echo
+            echo 'Release build completed successfully on the macOS runner.'
+            echo
+            echo '## Validation output'
+            echo
+            echo '### file'
+            echo '```text'
+            file "$DYNAMIC_LIBRARY"
+            echo '```'
+            echo
+            echo '### otool -L'
+            echo '```text'
+            otool -L "$DYNAMIC_LIBRARY"
+            echo '```'
+            echo
+            echo '### otool -D'
+            echo '```text'
+            otool -D "$DYNAMIC_LIBRARY"
+            echo '```'
+            echo
+            echo '### nm'
+            echo '```text'
+            nm -gU "$DYNAMIC_LIBRARY"
+            echo '```'
+          } >> "$REPORT"
+
+          file "$DYNAMIC_LIBRARY" | grep -Eq 'Mach-O.*dynamically linked shared library.*arm64|Mach-O.*arm64'
+          INSTALL_NAME="$(otool -D "$DYNAMIC_LIBRARY" | tail -n 1 | tr -d '\\r')"
+          test "$INSTALL_NAME" = "$EXPECTED_INSTALL_NAME"
+
+          for symbol in \
+            _TiktigerInitialize \
+            _TiktigerGetVersion \
+            _TiktigerGetStatus \
+            _TiktigerShutdown; do
+            nm -gU "$DYNAMIC_LIBRARY" | awk '{print $NF}' | grep -qx "$symbol"
+          done
+
+          if find "$DERIVED_DATA/Build/Products" -type f \( -name '*.ipa' -o -name '*.framework' \) -print -quit | grep -q .; then
+            echo 'Forbidden IPA or framework artifact found.' >&2
+            exit 1
+          fi
+          echo 'Mach-O architecture, install name, and required exports validated.'
+
+      - name: Upload Tiktiger.dylib artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: Tiktiger-dylib-release
+          path: |
+            ${{ steps.locate.outputs.path }}
+            TIKTIGER_GITHUB_BUILD_REPORT.md
+          if-no-files-found: error
+          retention-days: 14
