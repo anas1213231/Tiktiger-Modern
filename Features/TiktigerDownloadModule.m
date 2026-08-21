@@ -232,7 +232,8 @@ NSString *TiktigerStringFromDownloadState(TiktigerDownloadState state) {
     if (!retried) {
         [self.downloadLock lock];
         self.downloadState = TiktigerDownloadStateFailed;
-        self.lastError = [self errorSnapshotFromError:retryError ?: [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:14 userInfo:@{NSLocalizedDescriptionKey: @"Download retry was rejected."}];
+        NSError *safeRetryError = retryError ?: [NSError errorWithDomain:TiktigerDownloadModuleErrorDomain code:14 userInfo:@{NSLocalizedDescriptionKey: @"Download retry was rejected."}];
+        self.lastError = [self errorSnapshotFromError:safeRetryError];
         [self updateCurrentQueueItemWithState:@"failed" progress:self.progress];
         [self refreshQueueState];
         [self.downloadLock unlock];
