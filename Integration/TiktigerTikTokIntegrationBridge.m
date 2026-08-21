@@ -3,6 +3,7 @@
 #import "TiktigerPresentationBridge.h"
 #import "TiktigerTikTokIntegrationDiagnostics.h"
 #import "TiktigerFeatureRegistry.h"
+#import "TiktigerNavigationContract.h"
 
 static NSString * const TiktigerTikTokIntegrationBridgeErrorDomain = @"com.tiktiger.tiktok-integration-bridge";
 
@@ -21,12 +22,75 @@ static NSDictionary *TiktigerTikTokVideoLifecycleDescriptor(TiktigerTikTokVideoP
     return TiktigerDeepImmutableCopy(descriptor);
 }
 
+static NSError *TiktigerTikTokDownloadFlowError(NSInteger code, NSString *message) {
+    return [NSError errorWithDomain:TiktigerTikTokIntegrationBridgeErrorDomain code:code userInfo:@{NSLocalizedDescriptionKey: message ?: @"TikTok download flow validation failed."}];
+}
+
+static NSDictionary *TiktigerTikTokDownloadFlowDescriptor(TiktigerTikTokDownloadFlowState state, NSDictionary *payload) {
+    NSMutableDictionary *descriptor = [NSMutableDictionary dictionaryWithDictionary:payload ?: @{}];
+    descriptor[@"entryPoint"] = @"video.action";
+    descriptor[@"downloadFlowState"] = TiktigerStringFromTikTokDownloadFlowState(state);
+    descriptor[@"integrationStatus"] = @"foundation-only";
+    descriptor[@"targetAppIntegrated"] = @NO;
+    descriptor[@"presentationExecution"] = @"not-performed";
+    descriptor[@"downloadExecution"] = @"feature-binding-to-download-engine";
+    descriptor[@"returnContext"] = @"video-context";
+    return TiktigerDeepImmutableCopy(descriptor);
+}
+
+static NSURL *TiktigerTikTokSourceURLFromVideoEntry(NSDictionary *videoEntry, NSError **error) {
+    NSDictionary *hostContext = [videoEntry[@"hostContext"] isKindOfClass:[NSDictionary class]] ? videoEntry[@"hostContext"] : @{};
+    NSString *sourceString = [videoEntry[@"sourceURL"] isKindOfClass:[NSString class]] ? videoEntry[@"sourceURL"] : hostContext[@"sourceURL"];
+    NSURL *sourceURL = [sourceString isKindOfClass:[NSString class]] ? [NSURL URLWithString:sourceString] : nil;
+    NSString *scheme = sourceURL.scheme.lowercaseString;
+    if (sourceURL == nil || sourceURL.host.length == 0 || (![scheme isEqualToString:@"http"] && ![scheme isEqualToString:@"https"])) {
+        if (error != NULL) { *error = TiktigerTikTokDownloadFlowError(20, @"The video context does not contain a supported HTTP(S) source URL."); }
+        return nil;
+    }
+    return sourceURL;
+}
+
+static NSString *TiktigerTikTokSafeMediaType(NSDictionary *options, NSError **error) {
+    NSString *mediaType = [options[@"mediaType"] isKindOfClass:[NSString class]] ? [options[@"mediaType"] lowercaseString] : @"video";
+    NSSet *allowed = [NSSet setWithObjects:@"video", @"audio", @"image", nil];
+    if (![allowed containsObject:mediaType]) {
+        if (error != NULL) { *error = TiktigerTikTokDownloadFlowError(21, @"The requested media type is not supported by the Download Module."); }
+        return nil;
+    }
+    return mediaType;
+}
+
+static NSString *TiktigerTikTokSafeQuality(NSDictionary *options, NSError **error) {
+    NSString *quality = [options[@"quality"] isKindOfClass:[NSString class]] ? options[@"quality"] : @"Auto";
+    NSArray *allowed = @[@"Auto", @"1080p", @"720p", @"Audio"];
+    if (![allowed containsObject:quality]) {
+        if (error != NULL) { *error = TiktigerTikTokDownloadFlowError(22, @"The requested quality option is not available in the Smart Download Sheet."); }
+        return nil;
+    }
+    return quality;
+}
+
+static TiktigerTikTokDownloadFlowState TiktigerTikTokDownloadFlowStateFromSnapshot(NSDictionary *snapshot) {
+    NSString *state = [snapshot[@"state"] isKindOfClass:[NSString class]] ? [snapshot[@"state"] lowercaseString] : @"";
+    if ([state isEqualToString:@"preparing"]) { return TiktigerTikTokDownloadFlowStatePreparing; }
+    if ([state isEqualToString:@"loading"] || [state isEqualToString:@"downloading"]) { return TiktigerTikTokDownloadFlowStateDownloading; }
+    if ([state isEqualToString:@"processing"]) { return TiktigerTikTokDownloadFlowStateProcessing; }
+    if ([state isEqualToString:@"completed"]) { return TiktigerTikTokDownloadFlowStateCompleted; }
+    if ([state isEqualToString:@"failed"]) { return TiktigerTikTokDownloadFlowStateFailed; }
+    return TiktigerTikTokDownloadFlowStateQueued;
+}
+
 @interface TiktigerTikTokIntegrationBridge ()
 @property (nonatomic, weak, readwrite) TiktigerHostCoordinator *hostCoordinator;
 @property (nonatomic, weak, readwrite) TiktigerPresentationBridge *presentationBridge;
 @property (nonatomic, strong, readwrite) TiktigerTikTokCompatibility *compatibility;
 @property (nonatomic, strong, readwrite) TiktigerTikTokIntegrationDiagnostics *diagnostics;
 @property (nonatomic, strong) NSLock *bridgeLock;
+@property (nonatomic, strong) id downloadEventToken;
+@property (nonatomic, copy) NSDictionary<NSString *, id> *activeVideoDownloadEntry;
+@property (nonatomic, copy) NSString *activeDownloadFlowID;
+- (void)installDownloadEventObservationIfNeeded;
+- (void)recordDownloadSnapshot:(NSDictionary *)snapshot eventAction:(NSString *)eventAction;
 @end
 
 @implementation TiktigerTikTokIntegrationBridge
@@ -41,6 +105,56 @@ static NSDictionary *TiktigerTikTokVideoLifecycleDescriptor(TiktigerTikTokVideoP
         _bridgeLock = [[NSLock alloc] init];
     }
     return self;
+}
+
+- (void)dealloc {
+    id<TiktigerFeatureBinding> binding = self.presentationBridge.binding;
+    if (self.downloadEventToken != nil) {
+        [binding unsubscribeFromModuleEvents:self.downloadEventToken];
+    }
+}
+
+- (void)installDownloadEventObservationIfNeeded {
+    id<TiktigerFeatureBinding> binding = self.presentationBridge.binding;
+    if (binding == nil || self.downloadEventToken != nil) { return; }
+    __weak typeof(self) weakSelf = self;
+    id token = [binding subscribeToModuleEvents:^(NSDictionary<NSString *,id> *event) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (strongSelf == nil || ![event[ @"featureID" ] isEqual:@"media.download"]) { return; }
+        NSDictionary *snapshot = [event[ @"download" ] isKindOfClass:[NSDictionary class]] ? event[ @"download" ] : @{};
+        if (snapshot.count == 0) { return; }
+        [strongSelf recordDownloadSnapshot:snapshot eventAction:event[ @"action" ]];
+    }];
+    self.downloadEventToken = token;
+}
+
+- (void)recordDownloadSnapshot:(NSDictionary *)snapshot eventAction:(NSString *)eventAction {
+    [self.bridgeLock lock];
+    NSDictionary *entry = self.activeVideoDownloadEntry ?: @{};
+    NSString *flowID = self.activeDownloadFlowID ?: @"";
+    [self.bridgeLock unlock];
+    if (entry.count == 0) { return; }
+    TiktigerTikTokDownloadFlowState state = TiktigerTikTokDownloadFlowStateFromSnapshot(snapshot);
+    NSDictionary *currentItem = [snapshot[ @"currentItem" ] isKindOfClass:[NSDictionary class]] ? snapshot[ @"currentItem" ] : @{};
+    NSString *taskID = [currentItem[ @"id" ] isKindOfClass:[NSString class]] ? currentItem[ @"id" ] : flowID;
+    NSDictionary *payload = @{
+        @"diagnosticEvent": eventAction.length > 0 ? eventAction : TiktigerStringFromTikTokDownloadFlowState(state),
+        @"flowID": taskID ?: @"",
+        @"engineState": snapshot[ @"engineState" ] ?: @"",
+        @"moduleState": snapshot[ @"state" ] ?: @"",
+        @"progress": snapshot[ @"progress" ] ?: @0.0,
+        @"sourceValidated": @YES,
+        @"mediaType": currentItem[ @"mediaType" ] ?: entry[ @"selectedMediaType" ] ?: @"video",
+        @"destination": currentItem[ @"destination" ] ?: entry[ @"selectedDestination" ] ?: @"files",
+        @"returnContext": @"video-context"
+    };
+    NSDictionary *descriptor = TiktigerTikTokDownloadFlowDescriptor(state, payload);
+    [self.diagnostics recordDownloadFlowState:descriptor];
+    if (taskID.length > 0 && ![taskID isEqualToString:flowID]) {
+        [self.bridgeLock lock];
+        self.activeDownloadFlowID = taskID;
+        [self.bridgeLock unlock];
+    }
 }
 
 - (NSDictionary<NSString *,id> *)receiveHostEntryPoint:(TiktigerTikTokEntryPointKind)kind context:(NSDictionary<NSString *,id> *)context metadata:(NSDictionary<NSString *,id> *)metadata error:(NSError **)error {
@@ -192,6 +306,209 @@ static NSDictionary *TiktigerTikTokVideoLifecycleDescriptor(TiktigerTikTokVideoP
     return returned;
 }
 
+- (NSDictionary<NSString *,id> *)requestSmartDownloadSheetForVideoEntry:(NSDictionary<NSString *,id> *)videoEntry options:(NSDictionary<NSString *,id> *)options error:(NSError **)error {
+    NSString *entryPoint = [videoEntry[@"entryPoint"] isKindOfClass:[NSString class]] ? videoEntry[@"entryPoint"] : @"";
+    NSString *profile = [videoEntry[@"compatibilityProfile"] isKindOfClass:[NSString class]] ? videoEntry[@"compatibilityProfile"] : @"error";
+    BOOL available = [videoEntry[@"available"] isKindOfClass:[NSNumber class]] && [videoEntry[@"available"] boolValue];
+    BOOL compatible = [profile isEqualToString:@"supported"] || [profile isEqualToString:@"supported-limited"];
+    if (![entryPoint isEqualToString:@"video.action"] || !available || !compatible) {
+        NSError *flowError = TiktigerTikTokDownloadFlowError(23, @"The video entry is unavailable or compatibility-gated for Download Flow.");
+        NSDictionary *failure = TiktigerTikTokDownloadFlowDescriptor(TiktigerTikTokDownloadFlowStateFailed, @{
+            @"diagnosticEvent": @"context-validation-failed",
+            @"reason": flowError.localizedDescription,
+            @"sourceValidated": @NO
+        });
+        [self.diagnostics recordDownloadFlowState:failure];
+        if (error != NULL) { *error = flowError; }
+        return failure;
+    }
+    NSError *sourceError = nil;
+    NSURL *sourceURL = TiktigerTikTokSourceURLFromVideoEntry(videoEntry, &sourceError);
+    if (sourceURL == nil) {
+        NSDictionary *failure = TiktigerTikTokDownloadFlowDescriptor(TiktigerTikTokDownloadFlowStateFailed, @{
+            @"diagnosticEvent": @"source-validation-failed",
+            @"reason": sourceError.localizedDescription ?: @"The video source is unavailable.",
+            @"sourceValidated": @NO
+        });
+        [self.diagnostics recordDownloadFlowState:failure];
+        if (error != NULL) { *error = sourceError; }
+        return failure;
+    }
+    NSError *mediaError = nil;
+    NSString *mediaType = TiktigerTikTokSafeMediaType(options ?: @{}, &mediaError);
+    NSError *qualityError = nil;
+    NSString *quality = TiktigerTikTokSafeQuality(options ?: @{}, &qualityError);
+    if (mediaType == nil || quality == nil) {
+        NSError *selectionError = mediaError ?: qualityError;
+        NSDictionary *failure = TiktigerTikTokDownloadFlowDescriptor(TiktigerTikTokDownloadFlowStateFailed, @{
+            @"diagnosticEvent": @"sheet-selection-failed",
+            @"reason": selectionError.localizedDescription ?: @"The Smart Download Sheet selection is invalid.",
+            @"sourceValidated": @YES
+        });
+        [self.diagnostics recordDownloadFlowState:failure];
+        if (error != NULL) { *error = selectionError; }
+        return failure;
+    }
+    NSError *routeError = nil;
+    NSDictionary *downloadRoute = [self routeHostEventToRoute:TiktigerNavigationRouteDownload error:&routeError];
+    if (downloadRoute == nil || [downloadRoute[@"state"] isEqualToString:@"rejected"]) {
+        NSError *flowError = routeError ?: TiktigerTikTokDownloadFlowError(24, @"The Download Center navigation contract is unavailable.");
+        NSDictionary *failure = TiktigerTikTokDownloadFlowDescriptor(TiktigerTikTokDownloadFlowStateFailed, @{
+            @"diagnosticEvent": @"download-route-failed",
+            @"reason": flowError.localizedDescription,
+            @"sourceValidated": @YES
+        });
+        [self.diagnostics recordDownloadFlowState:failure];
+        if (error != NULL) { *error = flowError; }
+        return failure;
+    }
+    NSError *stateError = nil;
+    NSDictionary *downloadState = [self.presentationBridge presentationStateForRoute:TiktigerNavigationRouteDownload error:&stateError] ?: @{};
+    NSString *configuredDestination = [downloadState[@"configuration"][@"destination"] isKindOfClass:[NSString class]] ? downloadState[@"configuration"][@"destination"] : @"files";
+    NSString *destination = [options[@"destination"] isKindOfClass:[NSString class]] && [options[@"destination"] length] > 0 ? options[@"destination"] : configuredDestination;
+    NSString *flowID = [NSUUID UUID].UUIDString;
+    NSMutableDictionary *activeEntry = [videoEntry mutableCopy] ?: [[NSMutableDictionary alloc] init];
+    activeEntry[@"sourceURL"] = sourceURL.absoluteString;
+    activeEntry[@"selectedMediaType"] = mediaType;
+    activeEntry[@"selectedQuality"] = quality;
+    activeEntry[@"selectedDestination"] = destination;
+    activeEntry[@"flowID"] = flowID;
+    [self.bridgeLock lock];
+    self.activeVideoDownloadEntry = TiktigerDeepImmutableCopy(activeEntry);
+    self.activeDownloadFlowID = flowID;
+    [self.bridgeLock unlock];
+    [self installDownloadEventObservationIfNeeded];
+    NSDictionary *sheet = TiktigerTikTokDownloadFlowDescriptor(TiktigerTikTokDownloadFlowStateSmartSheetRequested, @{
+        @"diagnosticEvent": @"smart-download-sheet-requested",
+        @"flowID": flowID,
+        @"sourceURL": sourceURL.absoluteString,
+        @"sourceValidated": @YES,
+        @"compatibilityProfile": profile,
+        @"mediaTypeOptions": @[@"video", @"audio", @"image"],
+        @"qualityOptions": @[@"Auto", @"1080p", @"720p", @"Audio"],
+        @"destinationOptions": @[@"files"],
+        @"selectedMediaType": mediaType,
+        @"selectedQuality": quality,
+        @"selectedDestination": destination,
+        @"downloadRoute": downloadRoute ?: @{},
+        @"downloadPresentationState": downloadState,
+        @"presentationMode": @"host-owned-existing-download-center"
+    });
+    [self.diagnostics recordDownloadFlowState:sheet];
+    if (stateError != nil && error != NULL) { *error = stateError; }
+    return sheet;
+}
+
+- (NSDictionary<NSString *,id> *)startDownloadForVideoEntry:(NSDictionary<NSString *,id> *)videoEntry options:(NSDictionary<NSString *,id> *)options error:(NSError **)error {
+    NSError *sheetError = nil;
+    NSDictionary *sheet = [self requestSmartDownloadSheetForVideoEntry:videoEntry options:options error:&sheetError];
+    if (![sheet[@"downloadFlowState"] isEqualToString:@"smart-sheet-requested"]) {
+        if (error != NULL) { *error = sheetError; }
+        return sheet;
+    }
+    id<TiktigerFeatureBinding> binding = self.presentationBridge.binding;
+    if (binding == nil) {
+        NSError *bindingError = TiktigerTikTokDownloadFlowError(25, @"The Download Module Feature Binding is unavailable.");
+        NSDictionary *failure = TiktigerTikTokDownloadFlowDescriptor(TiktigerTikTokDownloadFlowStateFailed, @{
+            @"diagnosticEvent": @"download-binding-unavailable",
+            @"reason": bindingError.localizedDescription,
+            @"sourceValidated": @YES,
+            @"flowID": sheet[@"flowID"] ?: @""
+        });
+        [self.diagnostics recordDownloadFlowState:failure];
+        if (error != NULL) { *error = bindingError; }
+        return failure;
+    }
+    NSError *sourceError = nil;
+    NSURL *sourceURL = TiktigerTikTokSourceURLFromVideoEntry(sheet, &sourceError);
+    if (sourceURL == nil) {
+        NSDictionary *failure = TiktigerTikTokDownloadFlowDescriptor(TiktigerTikTokDownloadFlowStateFailed, @{
+            @"diagnosticEvent": @"source-validation-failed",
+            @"reason": sourceError.localizedDescription ?: @"The validated video source could not be handed to the Download Module.",
+            @"sourceValidated": @NO,
+            @"flowID": sheet[@"flowID"] ?: @""
+        });
+        [self.diagnostics recordDownloadFlowState:failure];
+        if (error != NULL) { *error = sourceError; }
+        return failure;
+    }
+    NSDictionary *payload = @{
+        @"mediaType": sheet[@"selectedMediaType"] ?: @"video",
+        @"quality": sheet[@"selectedQuality"] ?: @"Auto",
+        @"destination": sheet[@"selectedDestination"] ?: @"files",
+        @"sourceURL": sourceURL.absoluteString
+    };
+    NSError *enqueueError = nil;
+    BOOL accepted = [binding executeFeatureAction:@"startDownload" featureID:@"media.download" payload:payload error:&enqueueError];
+    if (!accepted) {
+        NSDictionary *failure = TiktigerTikTokDownloadFlowDescriptor(TiktigerTikTokDownloadFlowStateFailed, @{
+            @"diagnosticEvent": @"download-enqueue-failed",
+            @"reason": enqueueError.localizedDescription ?: @"The Download Module rejected the validated source.",
+            @"sourceValidated": @YES,
+            @"flowID": sheet[@"flowID"] ?: @"",
+            @"mediaType": payload[@"mediaType"],
+            @"destination": payload[@"destination"]
+        });
+        [self.diagnostics recordDownloadFlowState:failure];
+        if (error != NULL) { *error = enqueueError; }
+        return failure;
+    }
+    NSDictionary *downloadSnapshot = [binding downloadPresentationState] ?: @{};
+    TiktigerTikTokDownloadFlowState state = TiktigerTikTokDownloadFlowStateFromSnapshot(downloadSnapshot);
+    NSDictionary *currentItem = [downloadSnapshot[@"currentItem"] isKindOfClass:[NSDictionary class]] ? downloadSnapshot[@"currentItem"] : @{};
+    NSDictionary *queued = TiktigerTikTokDownloadFlowDescriptor(state, @{
+        @"diagnosticEvent": @"download-enqueued",
+        @"flowID": sheet[@"flowID"] ?: currentItem[@"id"] ?: @"",
+        @"taskID": currentItem[@"id"] ?: @"",
+        @"sourceURL": sourceURL.absoluteString,
+        @"sourceValidated": @YES,
+        @"mediaType": payload[@"mediaType"],
+        @"quality": payload[@"quality"],
+        @"destination": payload[@"destination"],
+        @"downloadSnapshot": downloadSnapshot,
+        @"engineState": downloadSnapshot[@"engineState"] ?: @""
+    });
+    [self.diagnostics recordDownloadFlowState:queued];
+    if (error != NULL) { *error = nil; }
+    return queued;
+}
+
+- (NSDictionary<NSString *,id> *)closeTikTokDownloadFlowWithReason:(NSString *)reason error:(NSError **)error {
+    [self.bridgeLock lock];
+    NSString *flowID = self.activeDownloadFlowID ?: @"";
+    [self.bridgeLock unlock];
+    NSString *safeReason = [reason isKindOfClass:[NSString class]] && reason.length > 0 ? reason : @"host-dismissed";
+    NSDictionary *closed = TiktigerTikTokDownloadFlowDescriptor(TiktigerTikTokDownloadFlowStateClosed, @{
+        @"diagnosticEvent": @"download-flow-closed",
+        @"flowID": flowID,
+        @"closeReason": safeReason,
+        @"downloadTaskPreserved": @YES,
+        @"engineControl": @"unchanged"
+    });
+    [self.diagnostics recordDownloadFlowState:closed];
+    return closed;
+}
+
+- (NSDictionary<NSString *,id> *)returnToTikTokFromDownloadFlow:(NSDictionary<NSString *,id> *)hostEvent error:(NSError **)error {
+    [self.bridgeLock lock];
+    NSString *flowID = self.activeDownloadFlowID ?: @"";
+    [self.bridgeLock unlock];
+    NSDictionary *returned = TiktigerTikTokDownloadFlowDescriptor(TiktigerTikTokDownloadFlowStateReturnedToContext, @{
+        @"diagnosticEvent": @"download-returned-to-tiktok",
+        @"flowID": flowID,
+        @"hostEvent": hostEvent ?: @{},
+        @"contextRestoration": @"host-owned",
+        @"downloadTaskPreserved": @YES,
+        @"returnContext": @"video-context"
+    });
+    [self.diagnostics recordDownloadFlowState:returned];
+    [self.bridgeLock lock];
+    self.activeVideoDownloadEntry = nil;
+    self.activeDownloadFlowID = nil;
+    [self.bridgeLock unlock];
+    return returned;
+}
+
 - (NSDictionary<NSString *,id> *)openDashboardDescriptor:(NSError **)error {
     [self.bridgeLock lock];
     BOOL runtimeReady = self.hostCoordinator.runtimeState == TiktigerRuntimeStateReady;
@@ -253,6 +570,15 @@ static NSDictionary *TiktigerTikTokVideoLifecycleDescriptor(TiktigerTikTokVideoP
             @"presentationExecution": @"not-performed",
             @"returnContext": @"video-context"
         },
+        @"downloadFlowIntegration": @{
+            @"entryPoint": @"video.action",
+            @"route": TiktigerNavigationRouteDownload,
+            @"supportedStates": @[@"context-validated", @"smart-sheet-requested", @"queued", @"preparing", @"downloading", @"processing", @"completed", @"failed", @"closed", @"returned-to-context"],
+            @"sourceValidation": @"http-or-https-only",
+            @"executionPath": @"feature-binding-to-download-engine",
+            @"presentationExecution": @"not-performed",
+            @"returnContext": @"video-context"
+        },
         @"navigationExecution": @"not-performed"
     };
     [self.bridgeLock unlock];
@@ -261,6 +587,22 @@ static NSDictionary *TiktigerTikTokVideoLifecycleDescriptor(TiktigerTikTokVideoP
 
 @end
 
+
+NSString *TiktigerStringFromTikTokDownloadFlowState(TiktigerTikTokDownloadFlowState state) {
+    switch (state) {
+        case TiktigerTikTokDownloadFlowStateContextValidated: return @"context-validated";
+        case TiktigerTikTokDownloadFlowStateSmartSheetRequested: return @"smart-sheet-requested";
+        case TiktigerTikTokDownloadFlowStateQueued: return @"queued";
+        case TiktigerTikTokDownloadFlowStatePreparing: return @"preparing";
+        case TiktigerTikTokDownloadFlowStateDownloading: return @"downloading";
+        case TiktigerTikTokDownloadFlowStateProcessing: return @"processing";
+        case TiktigerTikTokDownloadFlowStateCompleted: return @"completed";
+        case TiktigerTikTokDownloadFlowStateFailed: return @"failed";
+        case TiktigerTikTokDownloadFlowStateClosed: return @"closed";
+        case TiktigerTikTokDownloadFlowStateReturnedToContext: return @"returned-to-context";
+    }
+    return @"unknown";
+}
 
 NSString *TiktigerStringFromTikTokVideoPresentationLifecycleState(TiktigerTikTokVideoPresentationLifecycleState state) {
     switch (state) {

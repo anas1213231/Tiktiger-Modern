@@ -18,6 +18,21 @@ typedef NS_ENUM(NSInteger, TiktigerTikTokVideoPresentationLifecycleState) {
 
 FOUNDATION_EXPORT NSString *TiktigerStringFromTikTokVideoPresentationLifecycleState(TiktigerTikTokVideoPresentationLifecycleState state);
 
+typedef NS_ENUM(NSInteger, TiktigerTikTokDownloadFlowState) {
+    TiktigerTikTokDownloadFlowStateContextValidated = 0,
+    TiktigerTikTokDownloadFlowStateSmartSheetRequested,
+    TiktigerTikTokDownloadFlowStateQueued,
+    TiktigerTikTokDownloadFlowStatePreparing,
+    TiktigerTikTokDownloadFlowStateDownloading,
+    TiktigerTikTokDownloadFlowStateProcessing,
+    TiktigerTikTokDownloadFlowStateCompleted,
+    TiktigerTikTokDownloadFlowStateFailed,
+    TiktigerTikTokDownloadFlowStateClosed,
+    TiktigerTikTokDownloadFlowStateReturnedToContext
+};
+
+FOUNDATION_EXPORT NSString *TiktigerStringFromTikTokDownloadFlowState(TiktigerTikTokDownloadFlowState state);
+
 @interface TiktigerTikTokIntegrationBridge : NSObject
 
 @property (nonatomic, weak, readonly) TiktigerHostCoordinator *hostCoordinator;
@@ -62,6 +77,24 @@ FOUNDATION_EXPORT NSString *TiktigerStringFromTikTokVideoPresentationLifecycleSt
 /// Records an explicit host return-to-video-context event.
 - (NSDictionary<NSString *, id> *)returnToVideoContext:(NSDictionary<NSString *, id> *)hostEvent
                                                  error:(NSError * _Nullable * _Nullable)error;
+
+/// Returns the existing Smart Download Sheet contract with validated source and current UI options.
+- (NSDictionary<NSString *, id> *)requestSmartDownloadSheetForVideoEntry:(NSDictionary<NSString *, id> *)videoEntry
+                                                                   options:(NSDictionary<NSString *, id> * _Nullable)options
+                                                                      error:(NSError * _Nullable * _Nullable)error;
+
+/// Starts a real Download Module action through Feature Binding using the validated source URL.
+- (NSDictionary<NSString *, id> *)startDownloadForVideoEntry:(NSDictionary<NSString *, id> *)videoEntry
+                                                      options:(NSDictionary<NSString *, id> * _Nullable)options
+                                                         error:(NSError * _Nullable * _Nullable)error;
+
+/// Records host closure of the TikTok-originated Download flow without cancelling the engine task.
+- (NSDictionary<NSString *, id> *)closeTikTokDownloadFlowWithReason:(NSString *)reason
+                                                                error:(NSError * _Nullable * _Nullable)error;
+
+/// Records host restoration of the originating TikTok video context.
+- (NSDictionary<NSString *, id> *)returnToTikTokFromDownloadFlow:(NSDictionary<NSString *, id> * _Nullable)hostEvent
+                                                             error:(NSError * _Nullable * _Nullable)error;
 
 /// Opens the Dashboard through validated host presentation contracts without creating a controller.
 - (NSDictionary<NSString *, id> *)openDashboardDescriptor:(NSError * _Nullable * _Nullable)error;
