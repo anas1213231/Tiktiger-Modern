@@ -88,6 +88,7 @@ jobs:
             echo "- Configuration: $CONFIGURATION"
             echo "- SDK: iphoneos"
             echo "- Architecture: arm64"
+            echo "- Code signing: Disabled for source-only Dynamic Library build"
             echo
             echo '## Xcode'
             echo
@@ -136,6 +137,9 @@ jobs:
             -arch arm64 \
             -derivedDataPath "$DERIVED_DATA" \
             ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
             clean build 2>&1 | tee "$BUILD_LOG"
 
       - name: Locate Tiktiger.dylib

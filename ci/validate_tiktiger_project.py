@@ -274,7 +274,7 @@ def validate_project(data: dict[str, Any]) -> None:
     if len(expected_sources) != 37:
         fail(ROOT, "exactly 37 Objective-C implementation files in the current source tree", len(expected_sources))
     if actual_sources != expected_sources:
-        fail(PROJECT_FILE, "Compile Sources exactly match all 37 repository .m files", expected_sources,)
+        fail(PROJECT_FILE, "Compile Sources exactly match all 37 repository .m files", actual_sources)
 
     frameworks_phase = target_phase(objects, target, "PBXFrameworksBuildPhase")
     frameworks = build_file_names(objects, frameworks_phase)
