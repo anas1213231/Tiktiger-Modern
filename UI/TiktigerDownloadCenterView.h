@@ -13,16 +13,19 @@ typedef NS_ENUM(NSInteger, TiktigerDownloadPresentationState) {
 };
 
 typedef void (^TiktigerDownloadFileOpenHandler)(NSURL *fileURL);
+typedef void (^TiktigerDownloadFileShareHandler)(NSURL *fileURL);
 
 @interface TiktigerDownloadCenterView : UIView
 
 @property (nonatomic, assign) TiktigerDownloadPresentationState presentationState;
 @property (nonatomic, copy, nullable) TiktigerDownloadFileOpenHandler openFileHandler;
+@property (nonatomic, copy, nullable) TiktigerDownloadFileShareHandler shareFileHandler;
 @property (nonatomic, assign) CGFloat progress;
 
 - (void)showToastMessage:(NSString *)message state:(NSInteger)state;
 - (void)setFeatureBinding:(id<TiktigerFeatureBinding> _Nullable)binding;
 - (void)applyDownloadPresentation:(NSDictionary<NSString *, id> *)snapshot;
+- (void)prepareForReturnToContext;
 
 @end
 

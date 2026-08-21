@@ -17,12 +17,20 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
 @end
 
 @interface TiktigerDownloadCenterView () <UISearchBarDelegate>
+- (void)updateRecommendationWithSnapshot:(NSDictionary<NSString *, id> *)snapshot;
+- (void)handleApplicationDidEnterBackground;
+- (void)handleApplicationWillEnterForeground;
+- (void)updateProgressOverlayWithSnapshot:(NSDictionary<NSString *, id> *)snapshot;
+- (NSString *)humanReadableErrorFromSnapshot:(NSDictionary<NSString *, id> *)snapshot;
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UILabel *subtitleLabel;
 @property (nonatomic, strong) UILabel *stateLabel;
 @property (nonatomic, strong) UILabel *progressLabel;
 @property (nonatomic, strong) UILabel *currentItemLabel;
 @property (nonatomic, strong) UIProgressView *progressView;
+@property (nonatomic, strong) UILabel *progressOverlayLabel;
+@property (nonatomic, strong) UIActivityIndicatorView *downloadActivityIndicator;
+@property (nonatomic, strong) UILabel *recommendationLabel;
 @property (nonatomic, strong) TiktigerGlassButton *downloadButton;
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIStackView *contentStackView;
@@ -47,9 +55,15 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
 @property (nonatomic, assign) NSInteger historyFilterIndex;
 @property (nonatomic, strong) NSDate *lastTelemetryDate;
 @property (nonatomic, assign) long long lastTelemetryBytes;
+@property (nonatomic, assign) double lastObservedSpeed;
+@property (nonatomic, assign) NSTimeInterval lastObservedRemaining;
 @property (nonatomic, weak) id<TiktigerFeatureBinding> featureBinding;
 @property (nonatomic, strong) id eventToken;
+@property (nonatomic, strong) id backgroundObserver;
+@property (nonatomic, strong) id foregroundObserver;
 @property (nonatomic, copy) NSString *selectedMediaType;
+@property (nonatomic, copy) NSString *lastPresentedErrorSignature;
+@property (nonatomic, assign) BOOL isInBackground;
 @property (nonatomic, copy) NSDictionary<NSString *, id> *lastSnapshot;
 @end
 
@@ -70,6 +84,17 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
     self.historyQuery = @"";
     self.historyFilterIndex = 0;
     self.lastSnapshot = @{};
+    self.lastPresentedErrorSignature = @"";
+    self.isInBackground = NO;
+    __weak typeof(self) weakSelf = self;
+    self.backgroundObserver = [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidEnterBackgroundNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+        (void)note;
+        [weakSelf handleApplicationDidEnterBackground];
+    }];
+    self.foregroundObserver = [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationWillEnterForegroundNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+        (void)note;
+        [weakSelf handleApplicationWillEnterForeground];
+    }];
 
     _scrollView = [[UIScrollView alloc] initWithFrame:CGRectZero];
     _scrollView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -141,6 +166,15 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
     self.qualityControl.accessibilityIdentifier = @"tiktiger.download.quality-control";
     [self.qualityControl addTarget:self action:@selector(qualityChanged:) forControlEvents:UIControlEventValueChanged];
     [_downloadOptionsCard.contentView addSubview:self.qualityControl];
+    self.recommendationLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    self.recommendationLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.recommendationLabel.font = [TiktigerDesignTokens statusFont];
+    self.recommendationLabel.textColor = [TiktigerDesignTokens vipWhiteSecondary];
+    self.recommendationLabel.numberOfLines = 0;
+    self.recommendationLabel.adjustsFontForContentSizeCategory = YES;
+    self.recommendationLabel.accessibilityIdentifier = @"tiktiger.download.recommendation";
+    self.recommendationLabel.accessibilityLabel = @"Recommended download option";
+    [_downloadOptionsCard.contentView addSubview:self.recommendationLabel];
 
     _downloadButton = [TiktigerGlassButton buttonWithTitle:@"Queue Video" redAccent:YES];
     _downloadButton.translatesAutoresizingMaskIntoConstraints = NO;
@@ -148,6 +182,13 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
     _downloadButton.accessibilityIdentifier = @"tiktiger.download.queue-button";
     [_downloadButton addTarget:self action:@selector(downloadPressed:) forControlEvents:UIControlEventTouchUpInside];
     [_downloadOptionsCard.contentView addSubview:_downloadButton];
+    self.downloadActivityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleMedium];
+    self.downloadActivityIndicator.translatesAutoresizingMaskIntoConstraints = NO;
+    self.downloadActivityIndicator.color = [TiktigerDesignTokens vipWhite];
+    self.downloadActivityIndicator.hidesWhenStopped = YES;
+    self.downloadActivityIndicator.accessibilityLabel = @"Download request in progress";
+    self.downloadActivityIndicator.accessibilityIdentifier = @"tiktiger.download.button.loading";
+    [_downloadButton addSubview:self.downloadActivityIndicator];
 
     _progressCard = [[TiktigerGlassCard alloc] initWithTitle:@"Current Operation"];
     _progressCard.accessibilityIdentifier = @"tiktiger.download.progress-card";
@@ -176,11 +217,20 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
     _progressView.progressTintColor = [TiktigerDesignTokens vipRed];
     _progressView.trackTintColor = [TiktigerDesignTokens vipSurface];
     _progressView.accessibilityLabel = @"Download progress";
+    self.progressOverlayLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    self.progressOverlayLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.progressOverlayLabel.font = [TiktigerDesignTokens statusFont];
+    self.progressOverlayLabel.textColor = [TiktigerDesignTokens vipWhiteSecondary];
+    self.progressOverlayLabel.numberOfLines = 0;
+    self.progressOverlayLabel.adjustsFontForContentSizeCategory = YES;
+    self.progressOverlayLabel.accessibilityIdentifier = @"tiktiger.download.progress-overlay";
+    self.progressOverlayLabel.accessibilityLabel = @"Download progress details";
     UIView *progressContent = _progressCard.contentView;
     [progressContent addSubview:_stateLabel];
     [progressContent addSubview:_progressLabel];
     [progressContent addSubview:_currentItemLabel];
     [progressContent addSubview:_progressView];
+    [progressContent addSubview:self.progressOverlayLabel];
 
     _queueCard = [[TiktigerGlassCard alloc] initWithTitle:@"Queue"];
     _queueCard.accessibilityIdentifier = @"tiktiger.download.queue-card";
@@ -277,11 +327,16 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
         [self.qualityControl.trailingAnchor constraintEqualToAnchor:_downloadOptionsCard.contentView.trailingAnchor constant:-padding],
         [self.qualityControl.topAnchor constraintEqualToAnchor:qualityLabel.bottomAnchor constant:[TiktigerDesignTokens sectionGap] / 2.0],
         [self.qualityControl.heightAnchor constraintEqualToConstant:[TiktigerDesignTokens controlHeight]],
+        [self.recommendationLabel.leadingAnchor constraintEqualToAnchor:_downloadOptionsCard.contentView.leadingAnchor constant:padding],
+        [self.recommendationLabel.trailingAnchor constraintEqualToAnchor:_downloadOptionsCard.contentView.trailingAnchor constant:-padding],
+        [self.recommendationLabel.topAnchor constraintEqualToAnchor:self.qualityControl.bottomAnchor constant:[TiktigerDesignTokens sectionGap] / 2.0],
         [_downloadButton.leadingAnchor constraintEqualToAnchor:_downloadOptionsCard.contentView.leadingAnchor constant:padding],
         [_downloadButton.trailingAnchor constraintEqualToAnchor:_downloadOptionsCard.contentView.trailingAnchor constant:-padding],
-        [_downloadButton.topAnchor constraintEqualToAnchor:self.qualityControl.bottomAnchor constant:[TiktigerDesignTokens sectionGap]],
+        [_downloadButton.topAnchor constraintEqualToAnchor:self.recommendationLabel.bottomAnchor constant:[TiktigerDesignTokens sectionGap]],
         [_downloadButton.heightAnchor constraintEqualToConstant:[TiktigerDesignTokens controlHeight]],
         [_downloadButton.bottomAnchor constraintEqualToAnchor:_downloadOptionsCard.contentView.bottomAnchor constant:-padding],
+        [self.downloadActivityIndicator.trailingAnchor constraintEqualToAnchor:_downloadButton.trailingAnchor constant:-padding],
+        [self.downloadActivityIndicator.centerYAnchor constraintEqualToAnchor:_downloadButton.centerYAnchor],
         [_stateLabel.leadingAnchor constraintEqualToAnchor:progressContent.leadingAnchor constant:padding],
         [_stateLabel.trailingAnchor constraintLessThanOrEqualToAnchor:_progressLabel.leadingAnchor constant:-padding],
         [_stateLabel.topAnchor constraintEqualToAnchor:progressContent.topAnchor constant:padding + [TiktigerDesignTokens controlHeight]],
@@ -293,7 +348,10 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
         [_progressView.leadingAnchor constraintEqualToAnchor:progressContent.leadingAnchor constant:padding],
         [_progressView.trailingAnchor constraintEqualToAnchor:progressContent.trailingAnchor constant:-padding],
         [_progressView.topAnchor constraintEqualToAnchor:_currentItemLabel.bottomAnchor constant:[TiktigerDesignTokens sectionGap]],
-        [_progressView.bottomAnchor constraintEqualToAnchor:progressContent.bottomAnchor constant:-padding],
+        [self.progressOverlayLabel.leadingAnchor constraintEqualToAnchor:progressContent.leadingAnchor constant:padding],
+        [self.progressOverlayLabel.trailingAnchor constraintEqualToAnchor:progressContent.trailingAnchor constant:-padding],
+        [self.progressOverlayLabel.topAnchor constraintEqualToAnchor:_progressView.bottomAnchor constant:[TiktigerDesignTokens sectionGap] / 2.0],
+        [self.progressOverlayLabel.bottomAnchor constraintEqualToAnchor:progressContent.bottomAnchor constant:-padding],
         [_queueStack.leadingAnchor constraintEqualToAnchor:_queueCard.contentView.leadingAnchor constant:padding],
         [_queueStack.trailingAnchor constraintEqualToAnchor:_queueCard.contentView.trailingAnchor constant:-padding],
         [_queueStack.topAnchor constraintEqualToAnchor:_queueCard.contentView.topAnchor constant:padding + [TiktigerDesignTokens controlHeight]],
@@ -327,6 +385,7 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
     self.presentationState = TiktigerDownloadPresentationStateIdle;
     [self refreshQueueAndHistoryWithSnapshot:self.lastSnapshot];
     [self refreshSettingsWithSnapshot:self.lastSnapshot];
+    [self updateRecommendationWithSnapshot:self.lastSnapshot];
 }
 
 - (TiktigerGlassRow *)mediaRowWithTitle:(NSString *)title detail:(NSString *)detail icon:(NSString *)icon type:(NSString *)type {
@@ -346,7 +405,7 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
     NSString *title = @"Queue Download";
     NSString *stateText = @"Idle";
     BOOL active = NO;
-    BOOL canExecute = self.featureBinding != nil;
+    BOOL canExecute = self.featureBinding != nil && !self.isInBackground;
     switch (presentationState) {
         case TiktigerDownloadPresentationStateIdle:
             title = @"Queue Download";
@@ -381,10 +440,16 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
     }
     [self.downloadButton setTitle:title forState:UIControlStateNormal];
     self.downloadButton.enabled = canExecute;
-    self.downloadButton.accessibilityValue = stateText;
+    self.downloadButton.accessibilityValue = self.isInBackground ? [NSString stringWithFormat:@"%@. View is backgrounded; the last verified snapshot is preserved.", stateText] : stateText;
+    self.downloadButton.accessibilityHint = active ? @"Download is active. The button is disabled until the real operation reaches a terminal state." : (presentationState == TiktigerDownloadPresentationStateFailed ? @"Retry the failed download through the Download Module." : @"Queue the selected media through the Download Module.");
+    if (active && ![TiktigerMotionSystem reduceMotionEnabled] && !self.isInBackground) {
+        [self.downloadActivityIndicator startAnimating];
+    } else {
+        [self.downloadActivityIndicator stopAnimating];
+    }
     self.stateLabel.text = stateText;
-    self.stateLabel.accessibilityValue = stateText;
-    [TiktigerMotionSystem applyGlowToView:self.downloadButton color:[TiktigerDesignTokens vipRed] active:active];
+    self.stateLabel.accessibilityValue = self.downloadButton.accessibilityValue;
+    [TiktigerMotionSystem applyGlowToView:self.downloadButton color:[TiktigerDesignTokens vipRed] active:active && !self.isInBackground];
     if (previousState != presentationState && self.progressCard != nil) {
         __weak typeof(self) weakSelf = self;
         [TiktigerMotionSystem animateViewWithSpring:self.progressCard animations:^{
@@ -411,6 +476,19 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
     self.progressLabel.accessibilityValue = self.progressLabel.text;
 }
 
+- (void)updateRecommendationWithSnapshot:(NSDictionary<NSString *, id> *)snapshot {
+    if (self.recommendationLabel == nil) { return; }
+    NSDictionary *currentItem = [snapshot[@"currentItem"] isKindOfClass:[NSDictionary class]] ? snapshot[@"currentItem"] : @{};
+    NSDictionary *configuration = [snapshot[@"configuration"] isKindOfClass:[NSDictionary class]] ? snapshot[@"configuration"] : @{};
+    NSString *detectedMedia = [currentItem[@"mediaType"] isKindOfClass:[NSString class]] && [currentItem[@"mediaType"] length] > 0 ? currentItem[@"mediaType"] : (self.selectedMediaType ?: @"video");
+    NSString *quality = self.selectedQuality ?: ([configuration[@"quality"] isKindOfClass:[NSString class]] ? configuration[@"quality"] : @"Auto");
+    NSString *destination = [configuration[@"destination"] isKindOfClass:[NSString class]] && [configuration[@"destination"] length] > 0 ? configuration[@"destination"] : @"files";
+    NSString *state = [snapshot[@"state"] isKindOfClass:[NSString class]] ? snapshot[@"state"] : @"idle";
+    NSString *prefix = [state isEqualToString:@"idle"] ? @"Recommended" : @"Detected media";
+    self.recommendationLabel.text = [NSString stringWithFormat:@"%@ %@ · %@ · %@", prefix, detectedMedia.capitalizedString, quality, destination];
+    self.recommendationLabel.accessibilityValue = self.recommendationLabel.text;
+}
+
 - (void)selectMediaType:(TiktigerGlassRow *)sender {
     NSArray<NSString *> *mediaTypes = @[@"video", @"audio", @"image"];
     if (sender.tag < 0 || sender.tag >= (NSInteger)mediaTypes.count) { return; }
@@ -424,6 +502,7 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
     NSString *title = [self.selectedMediaType capitalizedString];
     [self.downloadButton setTitle:[NSString stringWithFormat:@"Queue %@", title] forState:UIControlStateNormal];
     self.downloadButton.accessibilityHint = [NSString stringWithFormat:@"Queue %@ media through the Download Module.", title];
+    [self updateRecommendationWithSnapshot:self.lastSnapshot];
 }
 
 - (void)qualityChanged:(UISegmentedControl *)sender {
@@ -431,6 +510,7 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
     if (sender.selectedSegmentIndex < 0 || sender.selectedSegmentIndex >= (NSInteger)qualities.count) { return; }
     self.selectedQuality = qualities[(NSUInteger)sender.selectedSegmentIndex];
     self.qualityControl.accessibilityValue = self.selectedQuality;
+    [self updateRecommendationWithSnapshot:self.lastSnapshot];
 }
 
 - (void)downloadPressed:(UIButton *)sender {
@@ -454,6 +534,7 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
 - (void)setFeatureBinding:(id<TiktigerFeatureBinding>)binding {
     if (_featureBinding != nil) { [_featureBinding unsubscribeFromModuleEvents:self.eventToken]; }
     _featureBinding = binding;
+    self.eventToken = nil;
     __weak typeof(self) weakSelf = self;
     self.eventToken = [binding subscribeToModuleEvents:^(NSDictionary<NSString *,id> *event) {
         __strong typeof(weakSelf) self = weakSelf;
@@ -500,13 +581,47 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
     [self refreshSettingsWithSnapshot:self.lastSnapshot];
     [self refreshDetailWithSnapshot:self.lastSnapshot];
     [self refreshStorageWithSnapshot:self.lastSnapshot];
-    NSDictionary *lastError = self.lastSnapshot[@"lastError"];
-    if ([state isEqualToString:@"failed"] && [lastError[@"message"] length] > 0) {
-        [self showToastMessage:lastError[@"message"] state:TiktigerToastStateError];
+    [self updateRecommendationWithSnapshot:self.lastSnapshot];
+    [self updateProgressOverlayWithSnapshot:self.lastSnapshot];
+    NSString *humanError = [self humanReadableErrorFromSnapshot:self.lastSnapshot];
+    if ([state isEqualToString:@"failed"] && humanError.length > 0 && ![self.lastPresentedErrorSignature isEqualToString:humanError]) {
+        self.lastPresentedErrorSignature = humanError;
+        [self showToastMessage:humanError state:TiktigerToastStateError];
+    } else if (![state isEqualToString:@"failed"]) {
+        self.lastPresentedErrorSignature = @"";
     }
 }
 
-- (void)refreshQueueAndHistoryWithSnapshot:(NSDictionary<NSString *,id> *)snapshot {
+- (NSString *)humanReadableErrorFromSnapshot:(NSDictionary<NSString *, id> *)snapshot {
+    NSDictionary *lastError = [snapshot[@"lastError"] isKindOfClass:[NSDictionary class]] ? snapshot[@"lastError"] : @{};
+    NSString *message = [lastError[@"message"] isKindOfClass:[NSString class]] ? lastError[@"message"] : ([lastError[@"localizedDescription"] isKindOfClass:[NSString class]] ? lastError[@"localizedDescription"] : @"");
+    if (message.length == 0 && [snapshot[@"state"] isEqualToString:@"failed"]) { message = @"Download failed. Review the source and retry through the Download Module."; }
+    return message;
+}
+
+- (void)updateProgressOverlayWithSnapshot:(NSDictionary<NSString *, id> *)snapshot {
+    if (self.progressOverlayLabel == nil) { return; }
+    NSString *state = [snapshot[@"state"] isKindOfClass:[NSString class]] ? snapshot[@"state"] : @"idle";
+    double progress = MIN(MAX([snapshot[@"progress"] doubleValue], 0.0), 1.0);
+    NSString *progressText = [NSString stringWithFormat:@"%.0f%%", progress * 100.0];
+    NSString *status = [state capitalizedString];
+    NSString *detail = @"Select media and queue a verified source.";
+    if ([state isEqualToString:@"preparing"] || [state isEqualToString:@"loading"] || [state isEqualToString:@"processing"]) {
+        NSString *speedText = self.lastObservedSpeed > 0 ? [NSString stringWithFormat:@"%@/s", [self formattedBytes:(unsigned long long)self.lastObservedSpeed]] : @"Waiting for telemetry";
+        detail = [NSString stringWithFormat:@"%@ · %@ · %@ remaining", progressText, speedText, [self formattedDuration:self.lastObservedRemaining]];
+    } else if ([state isEqualToString:@"completed"]) {
+        detail = @"Success · File is ready. Open or Share from history.";
+    } else if ([state isEqualToString:@"failed"]) {
+        detail = [NSString stringWithFormat:@"%@ · Retry is available.", [self humanReadableErrorFromSnapshot:snapshot]];
+    }
+    if (self.isInBackground) {
+        detail = [NSString stringWithFormat:@"Backgrounded · Last verified snapshot preserved · %@", progressText];
+    }
+    self.progressOverlayLabel.text = [NSString stringWithFormat:@"%@ · %@", status, detail];
+    self.progressOverlayLabel.accessibilityValue = self.progressOverlayLabel.text;
+}
+
+- (void)refreshQueueAndHistoryWithSnapshot:(NSDictionary<NSString *, id> *)snapshot {
     if (self.queueStack == nil || self.historyStack == nil) { return; }
     for (UIView *view in [self.queueStack.arrangedSubviews copy]) {
         [self.queueStack removeArrangedSubview:view];
@@ -568,6 +683,7 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
         actions.spacing = [TiktigerDesignTokens sectionGap] / 2.0;
         if (completed) {
             [actions addArrangedSubview:[self historyActionButtonWithTitle:@"Open" action:@"open" taskID:item[@"id"]]];
+            [actions addArrangedSubview:[self historyActionButtonWithTitle:@"Share" action:@"share" taskID:item[@"id"]]];
         } else {
             [actions addArrangedSubview:[self historyActionButtonWithTitle:@"Retry" action:@"retry" taskID:item[@"id"]]];
         }
@@ -590,6 +706,7 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
     button.actionName = action;
     button.accessibilityIdentifier = [NSString stringWithFormat:@"tiktiger.download.history.%@.%@", action, button.taskID];
     button.accessibilityHint = [NSString stringWithFormat:@"%@ this history item.", title];
+    button.accessibilityLabel = [NSString stringWithFormat:@"%@ %@ download", title, taskID ?: @"file"];
     button.enabled = self.featureBinding != nil;
     [button addTarget:self action:@selector(historyActionPressed:) forControlEvents:UIControlEventTouchUpInside];
     return button;
@@ -611,14 +728,16 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
         return;
     }
     NSError *error = nil;
-    if ([sender.actionName isEqualToString:@"open"]) {
+    if ([sender.actionName isEqualToString:@"open"] || [sender.actionName isEqualToString:@"share"]) {
         NSURL *fileURL = [self.featureBinding downloadHistoryFileURLForID:sender.taskID error:&error];
         if (fileURL == nil) {
             [self showToastMessage:error.localizedDescription ?: @"The stored file is unavailable." state:TiktigerToastStateError];
-        } else if (self.openFileHandler != nil) {
+        } else if ([sender.actionName isEqualToString:@"open"] && self.openFileHandler != nil) {
             self.openFileHandler(fileURL);
+        } else if ([sender.actionName isEqualToString:@"share"] && self.shareFileHandler != nil) {
+            self.shareFileHandler(fileURL);
         } else {
-            [self showToastMessage:@"A host file handler is required to open this file." state:TiktigerToastStateInfo];
+            [self showToastMessage:[sender.actionName isEqualToString:@"share"] ? @"A host share handler is required to share this file." : @"A host file handler is required to open this file." state:TiktigerToastStateInfo];
         }
         return;
     }
@@ -703,6 +822,8 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
     double progress = [snapshot[@"progress"] doubleValue];
     if (progress <= 0 && totalBytes > 0) { progress = (double)bytes / (double)totalBytes; }
     NSTimeInterval remaining = speed > 0 && totalBytes > bytes ? (double)(totalBytes - bytes) / speed : 0;
+    self.lastObservedSpeed = speed;
+    self.lastObservedRemaining = remaining;
     NSString *fileName = destinationPath.length > 0 && ![destinationPath isEqualToString:@"—"] ? destinationPath.lastPathComponent : @"No file assigned";
     BOOL active = ![state isEqualToString:@"idle"] && ![state isEqualToString:@"completed"] && ![state isEqualToString:@"failed"];
     [self.detailCard setStatusMessage:active ? @"Live task telemetry from the Download Engine." : ([state isEqualToString:@"completed"] ? @"The last task completed successfully." : ([state isEqualToString:@"failed"] ? @"The last task failed; recovery details remain available." : @"No active download task."))];
@@ -757,6 +878,29 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
     }
 }
 
+- (void)handleApplicationDidEnterBackground {
+    self.isInBackground = YES;
+    [self.downloadActivityIndicator stopAnimating];
+    [self setPresentationState:self.presentationState];
+    [self updateProgressOverlayWithSnapshot:self.lastSnapshot];
+}
+
+- (void)handleApplicationWillEnterForeground {
+    self.isInBackground = NO;
+    [self applyDownloadPresentation:self.lastSnapshot ?: @{}];
+}
+
+- (void)prepareForReturnToContext {
+    if (![NSThread isMainThread]) {
+        __weak typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{ [weakSelf prepareForReturnToContext]; });
+        return;
+    }
+    [self.downloadActivityIndicator stopAnimating];
+    [self.progressCard setStatusMessage:@"Returning to host context. The last verified Download Module snapshot is preserved."];
+    [self updateProgressOverlayWithSnapshot:self.lastSnapshot ?: @{}];
+}
+
 - (void)showToastMessage:(NSString *)message state:(NSInteger)state {
     if (![NSThread isMainThread]) {
         __weak typeof(self) weakSelf = self;
@@ -770,6 +914,8 @@ static NSString * const TiktigerDownloadFeatureID = @"media.download";
 
 - (void)dealloc {
     [self.featureBinding unsubscribeFromModuleEvents:self.eventToken];
+    if (self.backgroundObserver != nil) { [[NSNotificationCenter defaultCenter] removeObserver:self.backgroundObserver]; }
+    if (self.foregroundObserver != nil) { [[NSNotificationCenter defaultCenter] removeObserver:self.foregroundObserver]; }
 }
 
 @end
