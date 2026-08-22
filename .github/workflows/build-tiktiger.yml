@@ -412,7 +412,8 @@ jobs:
           xcrun simctl install "$DEVICE_UDID" "$HOST_APP"
           HOST_DATA_CONTAINER="$(xcrun simctl get_app_container "$DEVICE_UDID" com.tiktiger.hosttest data)"
           HOST_RESULT_FILE="$HOST_DATA_CONTAINER/Documents/host-test-result.log"
-          rm -f "$HOST_RESULT_FILE"
+          HOST_STAGE_FILE="$HOST_DATA_CONTAINER/Documents/host-test-stage.log"
+          rm -f "$HOST_RESULT_FILE" "$HOST_STAGE_FILE"
           set +e
           : > "$HOST_TEST_LOG"
           HOST_LAUNCH_LOG="$HOST_TEST_LOG.launch"
@@ -440,6 +441,9 @@ jobs:
               fi
               sleep 2
             done
+          fi
+          if [[ ! -s "$HOST_TEST_LOG" && -f "$HOST_STAGE_FILE" ]]; then
+            cp "$HOST_STAGE_FILE" "$HOST_TEST_LOG"
           fi
           if [[ ! -s "$HOST_TEST_LOG" ]]; then
             cat "$HOST_LAUNCH_LOG" > "$HOST_TEST_LOG"
