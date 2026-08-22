@@ -24,8 +24,11 @@
         NSDictionary *compatibility = [runner runCompatibilityRecoveryValidation:&compatibilityError];
         NSLog(@"TIKTIGER_HOST_TEST_CHECKPOINT compatibility-complete result=%@ error=%@", compatibility, compatibilityError);
         NSError *bindingError = nil;
-        BOOL binding = [runner prepareWithError:&bindingError] && [runner validateBindingRoutesAndDiagnostics:&bindingError];
-        NSLog(@"TIKTIGER_HOST_TEST_CHECKPOINT binding-complete binding=%@ error=%@", binding ? @"YES" : @"NO", bindingError);
+        NSLog(@"TIKTIGER_HOST_TEST_CHECKPOINT binding-prepare-start");
+        BOOL bindingPrepared = [runner prepareWithError:&bindingError];
+        NSLog(@"TIKTIGER_HOST_TEST_CHECKPOINT binding-prepare-complete prepared=%@ error=%@", bindingPrepared ? @"YES" : @"NO", bindingError);
+        BOOL binding = bindingPrepared ? [runner validateBindingRoutesAndDiagnostics:&bindingError] : NO;
+        NSLog(@"TIKTIGER_HOST_TEST_CHECKPOINT binding-validate-complete binding=%@ error=%@", binding ? @"YES" : @"NO", bindingError);
         BOOL passed = [lifecycle[@"passed"] boolValue] && [compatibility[@"passed"] boolValue] && binding;
         NSLog(@"TIKTIGER_HOST_TEST_RESULT passed=%@ lifecycle=%@ compatibility=%@ binding=%@ errors=%@/%@/%@", passed ? @"YES" : @"NO", lifecycle, compatibility, binding ? @"YES" : @"NO", lifecycleError.localizedDescription ?: @"", compatibilityError.localizedDescription ?: @"", bindingError.localizedDescription ?: @"");
         NSLog(@"TIKTIGER_HOST_TEST_CHECKPOINT shutdown-start");

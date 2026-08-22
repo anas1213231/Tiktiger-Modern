@@ -378,26 +378,18 @@ jobs:
           xcrun simctl install "$DEVICE_UDID" "$HOST_APP"
           set +e
           : > "$HOST_TEST_LOG"
-          xcrun simctl launch --console "$DEVICE_UDID" com.tiktiger.hosttest > "$HOST_TEST_LOG" 2>&1 &
-          LAUNCH_PID=$!
-          DEADLINE=$((SECONDS + 120))
-          while kill -0 "$LAUNCH_PID" >/dev/null 2>&1; do
-            if (( SECONDS >= DEADLINE )); then
-              echo 'HOST_TEST_TIMEOUT' >> "$HOST_TEST_LOG"
-              xcrun simctl terminate "$DEVICE_UDID" com.tiktiger.hosttest >/dev/null 2>&1 || true
-              kill "$LAUNCH_PID" >/dev/null 2>&1 || true
-              wait "$LAUNCH_PID" >/dev/null 2>&1 || true
-              LAUNCH_STATUS=124
-              break
-            fi
-            sleep 2
-          done
-          if [[ "${LAUNCH_STATUS:-}" != '124' ]]; then
-            wait "$LAUNCH_PID"
-            LAUNCH_STATUS=$?
+          xcrun simctl launch "$DEVICE_UDID" com.tiktiger.hosttest > "$HOST_TEST_LOG" 2>&1
+          LAUNCH_STATUS=$?
+          if [[ "$LAUNCH_STATUS" == '0' ]]; then
+            for attempt in $(seq 1 30); do
+              xcrun simctl spawn "$DEVICE_UDID" log show --style compact --last 2m --predicate 'process == "TiktigerHostTest"' > "$HOST_TEST_LOG" 2>&1 || true
+              if grep -q 'TIKTIGER_HOST_TEST_RESULT passed=YES' "$HOST_TEST_LOG"; then
+                break
+              fi
+              sleep 2
+            done
           fi
           set -e
-          sleep 2
           xcrun simctl terminate "$DEVICE_UDID" com.tiktiger.hosttest >/dev/null 2>&1 || true
           cat "$HOST_TEST_LOG"
           if [[ "$LAUNCH_STATUS" != '0' ]]; then
