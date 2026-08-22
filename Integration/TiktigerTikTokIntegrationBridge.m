@@ -26,6 +26,22 @@ static NSError *TiktigerTikTokDownloadFlowError(NSInteger code, NSString *messag
     return [NSError errorWithDomain:TiktigerTikTokIntegrationBridgeErrorDomain code:code userInfo:@{NSLocalizedDescriptionKey: message ?: @"TikTok download flow validation failed."}];
 }
 
+static NSError *TiktigerTikTokRuntimeLifecycleError(NSInteger code, NSString *message) {
+    return [NSError errorWithDomain:TiktigerTikTokIntegrationBridgeErrorDomain code:code userInfo:@{NSLocalizedDescriptionKey: message ?: @"TikTok runtime lifecycle validation failed."}];
+}
+
+static NSDictionary *TiktigerTikTokRuntimeDescriptor(TiktigerTikTokRuntimeLifecycleState state, NSDictionary *payload) {
+    NSMutableDictionary *descriptor = [NSMutableDictionary dictionaryWithDictionary:payload ?: @{}];
+    descriptor[@"entryPoint"] = @"video.action";
+    descriptor[@"runtimeLifecycleState"] = TiktigerStringFromTikTokRuntimeLifecycleState(state);
+    descriptor[@"presentationMode"] = @"host-owned";
+    descriptor[@"presentationExecution"] = @"not-performed";
+    descriptor[@"targetAppIntegrated"] = @NO;
+    descriptor[@"integrationStatus"] = @"foundation-only";
+    descriptor[@"runtimeIntegrationStatus"] = @"host-owned-runtime-contract";
+    return TiktigerDeepImmutableCopy(descriptor);
+}
+
 static NSDictionary *TiktigerTikTokDownloadFlowDescriptor(TiktigerTikTokDownloadFlowState state, NSDictionary *payload) {
     NSMutableDictionary *descriptor = [NSMutableDictionary dictionaryWithDictionary:payload ?: @{}];
     descriptor[@"entryPoint"] = @"video.action";
@@ -89,6 +105,8 @@ static TiktigerTikTokDownloadFlowState TiktigerTikTokDownloadFlowStateFromSnapsh
 @property (nonatomic, strong) id downloadEventToken;
 @property (nonatomic, copy) NSDictionary<NSString *, id> *activeVideoDownloadEntry;
 @property (nonatomic, copy) NSString *activeDownloadFlowID;
+@property (nonatomic, assign) TiktigerTikTokRuntimeLifecycleState runtimeLifecycleState;
+@property (nonatomic, copy) NSDictionary<NSString *, id> *activeRuntimeEntry;
 - (void)installDownloadEventObservationIfNeeded;
 - (void)recordDownloadSnapshot:(NSDictionary *)snapshot eventAction:(NSString *)eventAction;
 @end
@@ -103,6 +121,8 @@ static TiktigerTikTokDownloadFlowState TiktigerTikTokDownloadFlowStateFromSnapsh
         _compatibility = compatibility;
         _diagnostics = diagnostics;
         _bridgeLock = [[NSLock alloc] init];
+        _runtimeLifecycleState = TiktigerTikTokRuntimeLifecycleStateIdle;
+        _activeRuntimeEntry = @{};
     }
     return self;
 }
@@ -554,6 +574,203 @@ static TiktigerTikTokDownloadFlowState TiktigerTikTokDownloadFlowStateFromSnapsh
     return immutableResult;
 }
 
+- (NSDictionary<NSString *,id> *)initializeRuntimeWithArtifactMetadata:(NSDictionary<NSString *,id> *)artifactMetadata error:(NSError **)error {
+    [self.bridgeLock lock];
+    self.runtimeLifecycleState = TiktigerTikTokRuntimeLifecycleStateInitializing;
+    [self.bridgeLock unlock];
+    [self.diagnostics recordRuntimeState:TiktigerTikTokRuntimeDescriptor(TiktigerTikTokRuntimeLifecycleStateInitializing, @{
+        @"event": @"initialize-requested",
+        @"hostOwned": @YES
+    })];
+
+    NSError *initializationError = nil;
+    BOOL success = artifactMetadata != nil ? [self.hostCoordinator initializeHostWithArtifactMetadata:artifactMetadata error:&initializationError] : [self.hostCoordinator initializeHost:&initializationError];
+    TiktigerTikTokRuntimeLifecycleState state = success ? TiktigerTikTokRuntimeLifecycleStateReady : TiktigerTikTokRuntimeLifecycleStateFailed;
+    [self.bridgeLock lock];
+    self.runtimeLifecycleState = state;
+    if (!success) { self.activeRuntimeEntry = @{}; }
+    [self.bridgeLock unlock];
+    NSDictionary *hostStatus = [self.hostCoordinator statusSnapshot] ?: @{};
+    NSDictionary *descriptor = TiktigerTikTokRuntimeDescriptor(state, @{
+        @"event": success ? @"initialize-completed" : @"initialize-failed",
+        @"hostCoordinatorState": hostStatus[@"state"] ?: @"unknown",
+        @"runtimeState": hostStatus[@"runtimeState"] ?: @"unknown",
+        @"lastError": initializationError.localizedDescription ?: hostStatus[@"lastError"] ?: @"",
+        @"recoveryAvailable": @(!success)
+    });
+    [self.diagnostics recordRuntimeState:descriptor];
+    if (!success && error != NULL) { *error = initializationError ?: TiktigerTikTokRuntimeLifecycleError(30, @"Tiktiger runtime initialization failed."); }
+    return descriptor;
+}
+
+- (NSDictionary<NSString *,id> *)startRuntimeExperienceForVideoContext:(NSDictionary<NSString *,id> *)context metadata:(NSDictionary<NSString *,id> *)metadata artifactMetadata:(NSDictionary<NSString *,id> *)artifactMetadata error:(NSError **)error {
+    [self.bridgeLock lock];
+    BOOL ready = self.hostCoordinator.runtimeState == TiktigerRuntimeStateReady;
+    [self.bridgeLock unlock];
+    if (!ready) {
+        NSDictionary *initialization = [self initializeRuntimeWithArtifactMetadata:artifactMetadata error:error];
+        if (![initialization[@"runtimeLifecycleState"] isEqualToString:@"ready"]) {
+            return initialization;
+        }
+    }
+    NSError *entryError = nil;
+    NSDictionary *entry = [self receiveVideoActionContext:context metadata:metadata error:&entryError];
+    if (entryError != nil || [entry[@"state"] isEqualToString:@"unavailable"] || [entry[@"state"] isEqualToString:@"failed"]) {
+        [self.bridgeLock lock];
+        self.runtimeLifecycleState = TiktigerTikTokRuntimeLifecycleStateFailed;
+        [self.bridgeLock unlock];
+        NSDictionary *failure = TiktigerTikTokRuntimeDescriptor(TiktigerTikTokRuntimeLifecycleStateFailed, @{
+            @"event": @"entry-failed",
+            @"reason": entryError.localizedDescription ?: entry[@"reason"] ?: @"Video entry is unavailable.",
+            @"entry": entry ?: @{}
+        });
+        [self.diagnostics recordRuntimeState:failure];
+        if (error != NULL) { *error = entryError ?: TiktigerTikTokRuntimeLifecycleError(31, failure[@"reason"]); }
+        return failure;
+    }
+    NSError *dashboardError = nil;
+    NSDictionary *dashboard = [self requestDashboardForVideoEntry:entry error:&dashboardError];
+    if (dashboardError != nil || [dashboard[@"state"] isEqualToString:@"unavailable"]) {
+        [self.bridgeLock lock];
+        self.runtimeLifecycleState = TiktigerTikTokRuntimeLifecycleStateFailed;
+        [self.bridgeLock unlock];
+        NSDictionary *failure = TiktigerTikTokRuntimeDescriptor(TiktigerTikTokRuntimeLifecycleStateFailed, @{
+            @"event": @"dashboard-failed",
+            @"reason": dashboardError.localizedDescription ?: dashboard[@"reason"] ?: @"Dashboard descriptor is unavailable.",
+            @"entry": entry ?: @{},
+            @"dashboard": dashboard ?: @{}
+        });
+        [self.diagnostics recordRuntimeState:failure];
+        if (error != NULL) { *error = dashboardError ?: TiktigerTikTokRuntimeLifecycleError(32, failure[@"reason"]); }
+        return failure;
+    }
+    [self.bridgeLock lock];
+    self.runtimeLifecycleState = TiktigerTikTokRuntimeLifecycleStatePresenting;
+    self.activeRuntimeEntry = entry ?: @{};
+    [self.bridgeLock unlock];
+    NSDictionary *descriptor = TiktigerTikTokRuntimeDescriptor(TiktigerTikTokRuntimeLifecycleStatePresenting, @{
+        @"event": @"presentation-requested",
+        @"entry": entry ?: @{},
+        @"dashboard": dashboard ?: @{},
+        @"compatibility": entry[@"compatibilityResult"] ?: @{},
+        @"hostPresentationRequired": @YES
+    });
+    [self.diagnostics recordRuntimeState:descriptor];
+    return descriptor;
+}
+
+- (NSDictionary<NSString *,id> *)presentRuntimeExperienceForEntry:(NSDictionary<NSString *,id> *)runtimeEntry hostEvent:(NSDictionary<NSString *,id> *)hostEvent error:(NSError **)error {
+    [self.bridgeLock lock];
+    NSDictionary *active = self.activeRuntimeEntry ?: @{};
+    BOOL valid = active.count > 0 && runtimeEntry.count > 0;
+    [self.bridgeLock unlock];
+    if (!valid) {
+        NSError *presentationError = TiktigerTikTokRuntimeLifecycleError(33, @"No active Video Action runtime entry is available for presentation acknowledgement.");
+        NSDictionary *failure = TiktigerTikTokRuntimeDescriptor(TiktigerTikTokRuntimeLifecycleStateFailed, @{
+            @"event": @"presentation-failed",
+            @"reason": presentationError.localizedDescription,
+            @"hostEventReceived": @(hostEvent.count > 0)
+        });
+        [self.diagnostics recordRuntimeState:failure];
+        if (error != NULL) { *error = presentationError; }
+        return failure;
+    }
+    [self.bridgeLock lock];
+    self.runtimeLifecycleState = TiktigerTikTokRuntimeLifecycleStatePresented;
+    [self.bridgeLock unlock];
+    NSDictionary *descriptor = TiktigerTikTokRuntimeDescriptor(TiktigerTikTokRuntimeLifecycleStatePresented, @{
+        @"event": @"presentation-completed",
+        @"hostAcknowledged": @YES,
+        @"hostEventReceived": @(hostEvent.count > 0),
+        @"presentationExecutionState": @"host-acknowledged"
+    });
+    [self.diagnostics recordPresentationState:descriptor];
+    [self.diagnostics recordRuntimeState:descriptor];
+    return descriptor;
+}
+
+- (NSDictionary<NSString *,id> *)closeRuntimeExperienceWithReason:(NSString *)reason error:(NSError **)error {
+    [self.bridgeLock lock];
+    BOOL active = self.activeRuntimeEntry.count > 0;
+    [self.bridgeLock unlock];
+    if (!active) {
+        NSError *closeError = TiktigerTikTokRuntimeLifecycleError(34, @"No active runtime presentation is available to close.");
+        NSDictionary *failure = TiktigerTikTokRuntimeDescriptor(TiktigerTikTokRuntimeLifecycleStateFailed, @{
+            @"event": @"close-failed",
+            @"reason": closeError.localizedDescription
+        });
+        [self.diagnostics recordRuntimeState:failure];
+        if (error != NULL) { *error = closeError; }
+        return failure;
+    }
+    [self.bridgeLock lock];
+    self.runtimeLifecycleState = TiktigerTikTokRuntimeLifecycleStateClosing;
+    [self.bridgeLock unlock];
+    NSDictionary *descriptor = TiktigerTikTokRuntimeDescriptor(TiktigerTikTokRuntimeLifecycleStateClosing, @{
+        @"event": @"presentation-closed",
+        @"reason": reason.length > 0 ? reason : @"host-closed",
+        @"downloadTasksPreserved": @YES
+    });
+    [self.diagnostics recordPresentationState:descriptor];
+    [self.diagnostics recordRuntimeState:descriptor];
+    return descriptor;
+}
+
+- (NSDictionary<NSString *,id> *)returnToTikTokRuntimeContext:(NSDictionary<NSString *,id> *)hostEvent error:(NSError **)error {
+    [self.bridgeLock lock];
+    BOOL active = self.activeRuntimeEntry.count > 0;
+    [self.bridgeLock unlock];
+    if (!active) {
+        NSError *returnError = TiktigerTikTokRuntimeLifecycleError(35, @"No active runtime presentation is available for return-to-context.");
+        NSDictionary *failure = TiktigerTikTokRuntimeDescriptor(TiktigerTikTokRuntimeLifecycleStateFailed, @{
+            @"event": @"return-failed",
+            @"reason": returnError.localizedDescription
+        });
+        [self.diagnostics recordRuntimeState:failure];
+        if (error != NULL) { *error = returnError; }
+        return failure;
+    }
+    [self.bridgeLock lock];
+    self.runtimeLifecycleState = TiktigerTikTokRuntimeLifecycleStateReturnedToContext;
+    self.activeRuntimeEntry = @{};
+    [self.bridgeLock unlock];
+    NSDictionary *descriptor = TiktigerTikTokRuntimeDescriptor(TiktigerTikTokRuntimeLifecycleStateReturnedToContext, @{
+        @"event": @"returned-to-tiktok-context",
+        @"hostEventReceived": @(hostEvent.count > 0),
+        @"returnContext": @"video-context",
+        @"downloadTasksPreserved": @YES
+    });
+    [self.diagnostics recordPresentationState:descriptor];
+    [self.diagnostics recordRuntimeState:descriptor];
+    return descriptor;
+}
+
+- (NSDictionary<NSString *,id> *)recoverRuntimeWithArtifactMetadata:(NSDictionary<NSString *,id> *)artifactMetadata reason:(NSString *)reason error:(NSError **)error {
+    [self.bridgeLock lock];
+    self.runtimeLifecycleState = TiktigerTikTokRuntimeLifecycleStateRecovering;
+    [self.bridgeLock unlock];
+    [self.diagnostics recordRuntimeState:TiktigerTikTokRuntimeDescriptor(TiktigerTikTokRuntimeLifecycleStateRecovering, @{
+        @"event": @"recovery-requested",
+        @"reason": reason.length > 0 ? reason : @"host-requested"
+    })];
+    NSError *recoveryError = nil;
+    BOOL recovered = [self.hostCoordinator recoverHost:&recoveryError];
+    TiktigerTikTokRuntimeLifecycleState state = recovered ? TiktigerTikTokRuntimeLifecycleStateReady : TiktigerTikTokRuntimeLifecycleStateFailed;
+    [self.bridgeLock lock];
+    self.runtimeLifecycleState = state;
+    if (!recovered) { self.activeRuntimeEntry = @{}; }
+    [self.bridgeLock unlock];
+    NSDictionary *descriptor = TiktigerTikTokRuntimeDescriptor(state, @{
+        @"event": recovered ? @"recovery-completed" : @"recovery-failed",
+        @"hostCoordinatorState": [self.hostCoordinator statusSnapshot][@"state"] ?: @"unknown",
+        @"lastError": recoveryError.localizedDescription ?: @"",
+        @"artifactMetadataProvided": @(artifactMetadata != nil)
+    });
+    [self.diagnostics recordRuntimeState:descriptor];
+    if (!recovered && error != NULL) { *error = recoveryError ?: TiktigerTikTokRuntimeLifecycleError(36, @"Runtime recovery failed."); }
+    return descriptor;
+}
+
 - (NSDictionary<NSString *,id> *)statusSnapshot {
     [self.bridgeLock lock];
     NSDictionary *snapshot = @{
@@ -579,6 +796,16 @@ static TiktigerTikTokDownloadFlowState TiktigerTikTokDownloadFlowStateFromSnapsh
             @"presentationExecution": @"not-performed",
             @"returnContext": @"video-context"
         },
+        @"runtimeIntegration": @{
+            @"entryPoint": @"video.action",
+            @"lifecycleState": TiktigerStringFromTikTokRuntimeLifecycleState(self.runtimeLifecycleState),
+            @"supportedStates": @[@"idle", @"initializing", @"ready", @"presenting", @"presented", @"closing", @"returned-to-context", @"recovering", @"failed"],
+            @"presentationMode": @"host-owned",
+            @"presentationExecution": @"not-performed",
+            @"activeEntry": @(self.activeRuntimeEntry.count > 0),
+            @"compatibilityEnforced": @YES,
+            @"returnContext": @"video-context"
+        },
         @"navigationExecution": @"not-performed"
     };
     [self.bridgeLock unlock];
@@ -587,6 +814,21 @@ static TiktigerTikTokDownloadFlowState TiktigerTikTokDownloadFlowStateFromSnapsh
 
 @end
 
+
+NSString *TiktigerStringFromTikTokRuntimeLifecycleState(TiktigerTikTokRuntimeLifecycleState state) {
+    switch (state) {
+        case TiktigerTikTokRuntimeLifecycleStateIdle: return @"idle";
+        case TiktigerTikTokRuntimeLifecycleStateInitializing: return @"initializing";
+        case TiktigerTikTokRuntimeLifecycleStateReady: return @"ready";
+        case TiktigerTikTokRuntimeLifecycleStatePresenting: return @"presenting";
+        case TiktigerTikTokRuntimeLifecycleStatePresented: return @"presented";
+        case TiktigerTikTokRuntimeLifecycleStateClosing: return @"closing";
+        case TiktigerTikTokRuntimeLifecycleStateReturnedToContext: return @"returned-to-context";
+        case TiktigerTikTokRuntimeLifecycleStateRecovering: return @"recovering";
+        case TiktigerTikTokRuntimeLifecycleStateFailed: return @"failed";
+    }
+    return @"unknown";
+}
 
 NSString *TiktigerStringFromTikTokDownloadFlowState(TiktigerTikTokDownloadFlowState state) {
     switch (state) {

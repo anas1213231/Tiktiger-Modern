@@ -18,6 +18,20 @@ typedef NS_ENUM(NSInteger, TiktigerTikTokVideoPresentationLifecycleState) {
 
 FOUNDATION_EXPORT NSString *TiktigerStringFromTikTokVideoPresentationLifecycleState(TiktigerTikTokVideoPresentationLifecycleState state);
 
+typedef NS_ENUM(NSInteger, TiktigerTikTokRuntimeLifecycleState) {
+    TiktigerTikTokRuntimeLifecycleStateIdle = 0,
+    TiktigerTikTokRuntimeLifecycleStateInitializing,
+    TiktigerTikTokRuntimeLifecycleStateReady,
+    TiktigerTikTokRuntimeLifecycleStatePresenting,
+    TiktigerTikTokRuntimeLifecycleStatePresented,
+    TiktigerTikTokRuntimeLifecycleStateClosing,
+    TiktigerTikTokRuntimeLifecycleStateReturnedToContext,
+    TiktigerTikTokRuntimeLifecycleStateRecovering,
+    TiktigerTikTokRuntimeLifecycleStateFailed
+};
+
+FOUNDATION_EXPORT NSString *TiktigerStringFromTikTokRuntimeLifecycleState(TiktigerTikTokRuntimeLifecycleState state);
+
 typedef NS_ENUM(NSInteger, TiktigerTikTokDownloadFlowState) {
     TiktigerTikTokDownloadFlowStateContextValidated = 0,
     TiktigerTikTokDownloadFlowStateSmartSheetRequested,
@@ -101,6 +115,34 @@ FOUNDATION_EXPORT NSString *TiktigerStringFromTikTokDownloadFlowState(TiktigerTi
 
 /// Resolves a stable route through Presentation Bridge and returns a host routing descriptor only.
 - (NSDictionary<NSString *, id> * _Nullable)routeHostEventToRoute:(NSString *)route error:(NSError * _Nullable * _Nullable)error;
+
+/// Initializes the host-owned runtime lifecycle and records the runtime state.
+- (NSDictionary<NSString *, id> *)initializeRuntimeWithArtifactMetadata:(NSDictionary<NSString *, id> * _Nullable)artifactMetadata
+                                                                  error:(NSError * _Nullable * _Nullable)error;
+
+/// Receives a Video Action context, enforces compatibility, initializes if needed, and returns a host presentation descriptor.
+- (NSDictionary<NSString *, id> *)startRuntimeExperienceForVideoContext:(NSDictionary<NSString *, id> *)context
+                                                                metadata:(NSDictionary<NSString *, id> *)metadata
+                                                         artifactMetadata:(NSDictionary<NSString *, id> * _Nullable)artifactMetadata
+                                                                     error:(NSError * _Nullable * _Nullable)error;
+
+/// Records host presentation acknowledgement; it does not create or present a UIKit controller.
+- (NSDictionary<NSString *, id> *)presentRuntimeExperienceForEntry:(NSDictionary<NSString *, id> *)runtimeEntry
+                                                           hostEvent:(NSDictionary<NSString *, id> * _Nullable)hostEvent
+                                                               error:(NSError * _Nullable * _Nullable)error;
+
+/// Closes the host-owned runtime presentation without mutating Download Engine behavior.
+- (NSDictionary<NSString *, id> *)closeRuntimeExperienceWithReason:(NSString *)reason
+                                                               error:(NSError * _Nullable * _Nullable)error;
+
+/// Records return to the originating TikTok context and clears the active runtime association.
+- (NSDictionary<NSString *, id> *)returnToTikTokRuntimeContext:(NSDictionary<NSString *, id> * _Nullable)hostEvent
+                                                          error:(NSError * _Nullable * _Nullable)error;
+
+/// Performs bounded host recovery after failed/degraded initialization.
+- (NSDictionary<NSString *, id> *)recoverRuntimeWithArtifactMetadata:(NSDictionary<NSString *, id> * _Nullable)artifactMetadata
+                                                                reason:(NSString * _Nullable)reason
+                                                                  error:(NSError * _Nullable * _Nullable)error;
 
 - (NSDictionary<NSString *, id> *)statusSnapshot;
 

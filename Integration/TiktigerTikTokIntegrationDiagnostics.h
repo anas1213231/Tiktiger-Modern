@@ -9,6 +9,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)recordCompatibilityResult:(NSDictionary<NSString *, id> *)result;
 - (void)recordPresentationState:(NSDictionary<NSString *, id> *)state;
 - (void)recordDownloadFlowState:(NSDictionary<NSString *, id> *)state;
+- (void)recordRuntimeState:(NSDictionary<NSString *, id> *)state;
 
 - (NSDictionary<NSString *, id> *)snapshot;
 - (void)reset;

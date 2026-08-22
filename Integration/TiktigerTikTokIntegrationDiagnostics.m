@@ -8,6 +8,7 @@
 @property (nonatomic, strong) NSMutableArray<NSDictionary<NSString *, id> *> *compatibilityHistory;
 @property (nonatomic, strong) NSMutableArray<NSDictionary<NSString *, id> *> *presentationHistory;
 @property (nonatomic, strong) NSMutableArray<NSDictionary<NSString *, id> *> *downloadFlowHistory;
+@property (nonatomic, strong) NSMutableArray<NSDictionary<NSString *, id> *> *runtimeHistory;
 @end
 
 @implementation TiktigerTikTokIntegrationDiagnostics
@@ -21,6 +22,7 @@
         _compatibilityHistory = [[NSMutableArray alloc] init];
         _presentationHistory = [[NSMutableArray alloc] init];
         _downloadFlowHistory = [[NSMutableArray alloc] init];
+        _runtimeHistory = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -45,6 +47,10 @@
     [self record:state kind:@"download-flow" history:self.downloadFlowHistory];
 }
 
+- (void)recordRuntimeState:(NSDictionary<NSString *,id> *)state {
+    [self record:state kind:@"runtime" history:self.runtimeHistory];
+}
+
 - (void)record:(NSDictionary<NSString *, id> *)payload kind:(NSString *)kind history:(NSMutableArray<NSDictionary<NSString *, id> *> *)history {
     NSDictionary *redacted = TiktigerRedactedDiagnosticCopy(payload ?: @{});
     NSDictionary *event = @{ @"kind": kind ?: @"unknown", @"timestamp": @([[NSDate date] timeIntervalSince1970]), @"payload": redacted ?: @{} };
@@ -62,11 +68,13 @@
         @"compatibilityHistory": [self.compatibilityHistory copy],
         @"presentationHistory": [self.presentationHistory copy],
         @"downloadFlowHistory": [self.downloadFlowHistory copy],
+        @"runtimeHistory": [self.runtimeHistory copy],
         @"entryPointCount": @(self.entryPointHistory.count),
         @"navigationCount": @(self.navigationHistory.count),
         @"compatibilityCount": @(self.compatibilityHistory.count),
         @"presentationCount": @(self.presentationHistory.count),
         @"downloadFlowCount": @(self.downloadFlowHistory.count),
+        @"runtimeCount": @(self.runtimeHistory.count),
         @"boundedHistory": @YES,
         @"redacted": @YES,
         @"preparationOnly": @YES,
@@ -83,6 +91,7 @@
     [self.compatibilityHistory removeAllObjects];
     [self.presentationHistory removeAllObjects];
     [self.downloadFlowHistory removeAllObjects];
+    [self.runtimeHistory removeAllObjects];
     [self.diagnosticsLock unlock];
 }
 
