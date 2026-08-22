@@ -360,21 +360,55 @@ jobs:
             echo 'detected=missing or not executable'
             exit 1
           fi
-          DEVICE_UDID="$(python3 - <<'PY'
+          DEVICE_SELECTION="$(python3 - <<'PY'
           import json
           import subprocess
           devices = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "-j"]))
+          candidates = []
           for runtime_devices in devices.get("devices", {}).values():
               for device in runtime_devices:
-                  if device.get("isAvailable") and device.get("state") == "Shutdown" and device.get("name"):
-                      print(device["udid"])
-                      raise SystemExit
-          raise SystemExit("No available shutdown iOS Simulator was found")
+                  if device.get("isAvailable") and device.get("name") and device.get("state") in ("Booted", "Shutdown"):
+                      candidates.append((device.get("state") == "Booted", device["udid"]))
+          if not candidates:
+              raise SystemExit("No available booted or shutdown iOS Simulator was found")
+          candidates.sort(reverse=True)
+          booted, udid = candidates[0]
+          print(f"{udid}|{'Booted' if booted else 'Shutdown'}")
           PY
           )"
-          echo "Host test simulator: $DEVICE_UDID"
-          xcrun simctl boot "$DEVICE_UDID" || true
-          xcrun simctl bootstatus "$DEVICE_UDID" -b
+          DEVICE_UDID="${DEVICE_SELECTION%%|*}"
+          DEVICE_STATE="${DEVICE_SELECTION##*|}"
+          echo "Host test simulator: $DEVICE_UDID ($DEVICE_STATE)"
+          if [[ "$DEVICE_STATE" == 'Shutdown' ]]; then
+            HOST_BOOT_LOG="$HOST_TEST_LOG.boot"
+            : > "$HOST_BOOT_LOG"
+            xcrun simctl boot "$DEVICE_UDID" > "$HOST_BOOT_LOG" 2>&1 || true
+            set +e
+            xcrun simctl bootstatus "$DEVICE_UDID" -b >> "$HOST_BOOT_LOG" 2>&1 &
+            BOOT_PID=$!
+            BOOT_STATUS=124
+            BOOT_DEADLINE=$((SECONDS + 300))
+            while kill -0 "$BOOT_PID" >/dev/null 2>&1; do
+              if (( SECONDS >= BOOT_DEADLINE )); then
+                kill "$BOOT_PID" >/dev/null 2>&1 || true
+                break
+              fi
+              sleep 2
+            done
+            if ! kill -0 "$BOOT_PID" >/dev/null 2>&1; then
+              wait "$BOOT_PID"
+              BOOT_STATUS=$?
+            fi
+            set -e
+            if [[ "$BOOT_STATUS" != '0' ]]; then
+              echo 'VALIDATION_FAILED'
+              echo "path=$HOST_BOOT_LOG"
+              echo 'expected=Simulator bootstatus reaches terminal ready state within 300 seconds'
+              echo "detected=bootstatus exit=$BOOT_STATUS"
+              tail -n 120 "$HOST_BOOT_LOG"
+              exit 1
+            fi
+          fi
           xcrun simctl install "$DEVICE_UDID" "$HOST_APP"
           HOST_DATA_CONTAINER="$(xcrun simctl get_app_container "$DEVICE_UDID" com.tiktiger.hosttest data)"
           HOST_RESULT_FILE="$HOST_DATA_CONTAINER/Documents/host-test-result.log"
