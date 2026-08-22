@@ -29,6 +29,12 @@ jobs:
       XCODE_LIST_LOG: ${{ github.workspace }}/xcodebuild-list.log
       VALIDATION_LOG: ${{ github.workspace }}/validation.log
       BUILD_LOG: ${{ github.workspace }}/build.log
+      HOST_PROJECT: HostTest/HostTest.xcodeproj
+      HOST_SCHEME: TiktigerHostTest
+      HOST_RUNTIME_DERIVED_DATA: ${{ github.workspace }}/HostTest/RuntimeDerivedData
+      HOST_DERIVED_DATA: ${{ github.workspace }}/HostTest/DerivedData
+      HOST_TEST_REPORT: ${{ github.workspace }}/HostTest/host-test-report.md
+      HOST_TEST_LOG: ${{ github.workspace }}/HostTest/host-test.log
 
     steps:
       - name: Checkout repository
@@ -259,6 +265,140 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Validate Host Test Environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          for required in \
+            HostTest/HostTest.xcodeproj/project.pbxproj \
+            HostTest/HostTest.xcodeproj/xcshareddata/xcschemes/TiktigerHostTest.xcscheme \
+            HostTest/TiktigerHostTestRunner.m \
+            HostTest/TiktigerHostTestAppDelegate.m \
+            HostTest/main.m \
+            HostTest/Tests/TiktigerHostTestTests.m \
+            HostTest/Info.plist \
+            HostTest/Tests/Info.plist; do
+            if [[ ! -f "$required" ]]; then
+              echo 'VALIDATION_FAILED'
+              echo "path=$required"
+              echo 'expected=HostTest source/project file'
+              echo 'detected=missing'
+              exit 1
+            fi
+          done
+          if find HostTest -type f \
+            \( -name '*.ipa' -o -name '*.dylib' -o -name '*.framework' -o -name '*.xcarchive' \) \
+            -print -quit | grep -q .; then
+            echo 'VALIDATION_FAILED'
+            echo 'path=HostTest'
+            echo 'expected=no committed host binary or IPA artifacts before CI copy step'
+            echo 'detected=forbidden artifact found'
+            exit 1
+          fi
+          grep -q 'TiktigerHostTest' HostTest/HostTest.xcodeproj/xcshareddata/xcschemes/TiktigerHostTest.xcscheme
+          grep -q 'TiktigerHostTestRunner.m' HostTest/HostTest.xcodeproj/project.pbxproj
+          grep -q 'testRuntimeLifecycle' HostTest/Tests/TiktigerHostTestTests.m
+          echo 'HOST_TEST_PREFLIGHT_PASS'
+
+      - name: Build Host Test Runtime for Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$HOST_RUNTIME_DERIVED_DATA"
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -arch arm64 \
+            -derivedDataPath "$HOST_RUNTIME_DERIVED_DATA" \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean build
+          SIMULATOR_DYLIB="$HOST_RUNTIME_DERIVED_DATA/Build/Products/Debug-iphonesimulator/Tiktiger.dylib"
+          if [[ ! -f "$SIMULATOR_DYLIB" ]]; then
+            echo 'VALIDATION_FAILED'
+            echo "path=$SIMULATOR_DYLIB"
+            echo 'expected=simulator-compatible Tiktiger.dylib'
+            echo 'detected=missing'
+            exit 1
+          fi
+          cp "$SIMULATOR_DYLIB" HostTest/Tiktiger.dylib
+          file HostTest/Tiktiger.dylib
+
+      - name: Run xcodebuild -list for Host Test
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -list -project "$HOST_PROJECT"
+
+      - name: Run Host Test Integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p HostTest
+          DESTINATION="$(python3 - <<'PY'
+          import json
+          import subprocess
+          devices = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "-j"]))
+          for runtime_devices in devices.get("devices", {}).values():
+              for device in runtime_devices:
+                  if device.get("isAvailable") and device.get("state") == "Shutdown" and device.get("name"):
+                      print(f"platform=iOS Simulator,id={device['udid']}")
+                      raise SystemExit
+          raise SystemExit("No available shutdown iOS Simulator was found")
+          PY
+          )"
+          echo "Host test destination: $DESTINATION"
+          xcodebuild test \
+            -project "$HOST_PROJECT" \
+            -scheme "$HOST_SCHEME" \
+            -sdk iphonesimulator \
+            -destination "$DESTINATION" \
+            -derivedDataPath "$HOST_DERIVED_DATA" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" 2>&1 | tee "$HOST_TEST_LOG"
+
+      - name: Write Host Test Report
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo '# Tiktiger Host Test Integration Report'
+            echo
+            echo "- Workflow run: $GITHUB_RUN_ID"
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Host project: $HOST_PROJECT"
+            echo "- Host scheme: $HOST_SCHEME"
+            echo "- Verified release Dylib: ${{ steps.locate.outputs.path }}"
+            echo '- Simulator runtime: built from the same Tiktiger source for iphonesimulator compatibility'
+            echo
+            if [[ -f "$HOST_TEST_LOG" ]]; then
+              echo '## Host test log tail'
+              echo
+              echo '```text'
+              tail -n 120 "$HOST_TEST_LOG"
+              echo '```'
+            else
+              echo 'Host test log was not produced.'
+            fi
+          } > "$HOST_TEST_REPORT"
+
+      - name: Upload Host Test Report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Tiktiger-host-test-report
+          path: |
+            HostTest/host-test-report.md
+            HostTest/host-test.log
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Upload CI diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v7
@@ -268,6 +408,8 @@ jobs:
             xcodebuild-list.log
             validation.log
             build.log
+            HostTest/host-test-report.md
+            HostTest/host-test.log
             TIKTIGER_GITHUB_BUILD_REPORT.md
           if-no-files-found: ignore
           retention-days: 14

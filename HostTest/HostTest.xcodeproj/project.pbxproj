@@ -1,0 +1,334 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		100000000000000000000001 /* TiktigerHostTestRunner.m in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000001 /* TiktigerHostTestRunner.m */; };
+		100000000000000000000002 /* TiktigerHostTestAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000003 /* TiktigerHostTestAppDelegate.m */; };
+		100000000000000000000003 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000004 /* main.m */; };
+		100000000000000000000004 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 200000000000000000000010 /* UIKit.framework */; };
+		100000000000000000000005 /* Tiktiger.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 200000000000000000000006 /* Tiktiger.dylib */; };
+		100000000000000000000006 /* Tiktiger.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 200000000000000000000006 /* Tiktiger.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		100000000000000000000007 /* TiktigerHostTestTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000008 /* TiktigerHostTestTests.m */; };
+		100000000000000000000008 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 200000000000000000000011 /* XCTest.framework */; };
+		100000000000000000000009 /* UIKit.framework in Test Frameworks */ = {isa = PBXBuildFile; fileRef = 200000000000000000000010 /* UIKit.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		700000000000000000000001 /* ContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 500000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 400000000000000000000002;
+			remoteInfo = TiktigerHostTest;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		600000000000000000000004 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			 dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				100000000000000000000006 /* Tiktiger.dylib in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		200000000000000000000001 /* TiktigerHostTestRunner.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TiktigerHostTestRunner.m; sourceTree = "<group>"; };
+		200000000000000000000002 /* TiktigerHostTestAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TiktigerHostTestAppDelegate.h; sourceTree = "<group>"; };
+		200000000000000000000003 /* TiktigerHostTestAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TiktigerHostTestAppDelegate.m; sourceTree = "<group>"; };
+		200000000000000000000004 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		200000000000000000000005 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		200000000000000000000006 /* Tiktiger.dylib */ = {isa = PBXFileReference; explicitFileType = compiled.mach-o.dylib; name = Tiktiger.dylib; path = Tiktiger.dylib; sourceTree = "<group>"; };
+		200000000000000000000007 /* HostTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TiktigerHostTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		200000000000000000000008 /* TiktigerHostTestTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TiktigerHostTestTests.m; sourceTree = "<group>"; };
+		200000000000000000000009 /* Tests-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		200000000000000000000010 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		200000000000000000000011 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		200000000000000000000012 /* HostTestTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TiktigerHostTestTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		600000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000004 /* UIKit.framework in Frameworks */,
+				100000000000000000000005 /* Tiktiger.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		600000000000000000000006 /* Test Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000008 /* XCTest.framework in Frameworks */,
+				100000000000000000000009 /* UIKit.framework in Test Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		300000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				300000000000000000000002 /* HostTest Sources */,
+				300000000000000000000003 /* HostTest Tests */,
+				300000000000000000000004 /* Frameworks */,
+				300000000000000000000005 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		300000000000000000000002 /* HostTest Sources */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000001 /* TiktigerHostTestRunner.m */,
+				200000000000000000000002 /* TiktigerHostTestAppDelegate.h */,
+				200000000000000000000003 /* TiktigerHostTestAppDelegate.m */,
+				200000000000000000000004 /* main.m */,
+				200000000000000000000005 /* Info.plist */,
+				200000000000000000000006 /* Tiktiger.dylib */,
+			);
+			path = .;
+			sourceTree = "<group>";
+		};
+		300000000000000000000003 /* HostTest Tests */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000008 /* TiktigerHostTestTests.m */,
+				200000000000000000000009 /* Tests-Info.plist */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		300000000000000000000004 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000010 /* UIKit.framework */,
+				200000000000000000000011 /* XCTest.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		300000000000000000000005 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000007 /* HostTest.app */,
+				200000000000000000000012 /* HostTestTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		400000000000000000000001 /* TiktigerHostTest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 900000000000000000000001 /* Build configuration list for TiktigerHostTest */;
+			buildPhases = (
+				600000000000000000000001 /* Sources */,
+				600000000000000000000002 /* Frameworks */,
+				600000000000000000000003 /* Resources */,
+				600000000000000000000004 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TiktigerHostTest;
+			productName = TiktigerHostTest;
+			productReference = 200000000000000000000007 /* HostTest.app */;
+			productType = "com.apple.product-type.application";
+		};
+		400000000000000000000002 /* TiktigerHostTestTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 900000000000000000000002 /* Build configuration list for TiktigerHostTestTests */;
+			buildPhases = (
+				600000000000000000000005 /* Test Sources */,
+				600000000000000000000006 /* Test Frameworks */,
+				600000000000000000000007 /* Test Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				700000000000000000000002 /* TargetDependency */,
+			);
+			name = TiktigerHostTestTests;
+			productName = TiktigerHostTestTests;
+			productReference = 200000000000000000000012 /* HostTestTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		500000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					400000000000000000000001 = { CreatedOnToolsVersion = 16.0; };
+					400000000000000000000002 = { CreatedOnToolsVersion = 16.0; TestTargetID = 400000000000000000000001; };
+				};
+			};
+			buildConfigurationList = 900000000000000000000003 /* Build configuration list for PBXProject */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 300000000000000000000001;
+			productRefGroup = 300000000000000000000005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				400000000000000000000001 /* TiktigerHostTest */,
+				400000000000000000000002 /* TiktigerHostTestTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		600000000000000000000003 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ( ); runOnlyForDeploymentPostprocessing = 0; };
+		600000000000000000000007 /* Test Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ( ); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		600000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000001 /* TiktigerHostTestRunner.m in Sources */,
+				100000000000000000000002 /* TiktigerHostTestAppDelegate.m in Sources */,
+				100000000000000000000003 /* main.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		600000000000000000000005 /* Test Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000007 /* TiktigerHostTestTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		700000000000000000000002 /* TargetDependency */ = {isa = PBXTargetDependency; target = 400000000000000000000001 /* TiktigerHostTest */; targetProxy = 700000000000000000000001 /* ContainerItemProxy */; };
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		800000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				INFOPLIST_FILE = Info.plist;
+				HEADER_SEARCH_PATHS = ("$(SRCROOT)/../Core", "$(SRCROOT)/../Configuration", "$(SRCROOT)/../Diagnostics", "$(SRCROOT)/../Features", "$(SRCROOT)/../Integration", "$(SRCROOT)/../Public", "$(SRCROOT)/../UIBridge");
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+				PRODUCT_BUNDLE_IDENTIFIER = com.tiktiger.hosttest;
+				PRODUCT_NAME = TiktigerHostTest;
+				SDKROOT = iphonesimulator;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		800000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "";
+				DEBUG_INFORMATION_FORMAT = dwarf-with-dsym;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				INFOPLIST_FILE = Info.plist;
+				HEADER_SEARCH_PATHS = ("$(SRCROOT)/../Core", "$(SRCROOT)/../Configuration", "$(SRCROOT)/../Diagnostics", "$(SRCROOT)/../Features", "$(SRCROOT)/../Integration", "$(SRCROOT)/../Public", "$(SRCROOT)/../UIBridge");
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+				PRODUCT_BUNDLE_IDENTIFIER = com.tiktiger.hosttest;
+				PRODUCT_NAME = TiktigerHostTest;
+				SDKROOT = iphonesimulator;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		800000000000000000000003 /* Test Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "";
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				INFOPLIST_FILE = Tests/Info.plist;
+				HEADER_SEARCH_PATHS = ("$(SRCROOT)/../Core", "$(SRCROOT)/../Configuration", "$(SRCROOT)/../Diagnostics", "$(SRCROOT)/../Features", "$(SRCROOT)/../Integration", "$(SRCROOT)/../Public", "$(SRCROOT)/../UIBridge");
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@loader_path/Frameworks", "@loader_path/../Frameworks");
+				PRODUCT_BUNDLE_IDENTIFIER = com.tiktiger.hosttest.tests;
+				PRODUCT_NAME = TiktigerHostTestTests;
+				SDKROOT = iphonesimulator;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TiktigerHostTest.app/TiktigerHostTest";
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		800000000000000000000004 /* Test Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "";
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				INFOPLIST_FILE = Tests/Info.plist;
+				HEADER_SEARCH_PATHS = ("$(SRCROOT)/../Core", "$(SRCROOT)/../Configuration", "$(SRCROOT)/../Diagnostics", "$(SRCROOT)/../Features", "$(SRCROOT)/../Integration", "$(SRCROOT)/../Public", "$(SRCROOT)/../UIBridge");
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@loader_path/Frameworks", "@loader_path/../Frameworks");
+				PRODUCT_BUNDLE_IDENTIFIER = com.tiktiger.hosttest.tests;
+				PRODUCT_NAME = TiktigerHostTestTests;
+				SDKROOT = iphonesimulator;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TiktigerHostTest.app/TiktigerHostTest";
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		800000000000000000000005 /* Project Debug */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x"; CLANG_CXX_LIBRARY = "libc++"; GCC_C_LANGUAGE_STANDARD = gnu11; SDKROOT = iphonesimulator; }; name = Debug; };
+		800000000000000000000006 /* Project Release */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x"; CLANG_CXX_LIBRARY = "libc++"; GCC_C_LANGUAGE_STANDARD = gnu11; SDKROOT = iphonesimulator; }; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		900000000000000000000001 /* Build configuration list for TiktigerHostTest */ = {isa = XCConfigurationList; buildConfigurations = (800000000000000000000001, 800000000000000000000002); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		900000000000000000000002 /* Build configuration list for TiktigerHostTestTests */ = {isa = XCConfigurationList; buildConfigurations = (800000000000000000000003, 800000000000000000000004); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		900000000000000000000003 /* Build configuration list for PBXProject */ = {isa = XCConfigurationList; buildConfigurations = (800000000000000000000005, 800000000000000000000006); defaultConfigurationIsVisible = 1; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = 500000000000000000000001 /* Project object */;
+}

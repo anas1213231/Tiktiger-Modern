@@ -268,14 +268,14 @@ def validate_project(data: dict[str, Any]) -> None:
     expected_sources = sorted(
         path.relative_to(ROOT).as_posix()
         for path in ROOT.rglob("*.m")
-        if ".git" not in path.parts and "DerivedData" not in path.parts
+        if ".git" not in path.parts and "DerivedData" not in path.parts and "HostTest" not in path.parts
     )
     actual_sources = sorted(actual_sources)
     minimum_source_count = 37
     if len(expected_sources) < minimum_source_count:
         fail(ROOT, f"at least {minimum_source_count} Objective-C implementation files in the current source tree", len(expected_sources))
     if actual_sources != expected_sources:
-        fail(PROJECT_FILE, "Compile Sources exactly match all repository .m files", actual_sources)
+        fail(PROJECT_FILE, "Compile Sources exactly match all production repository .m files (HostTest excluded)", actual_sources)
 
     frameworks_phase = target_phase(objects, target, "PBXFrameworksBuildPhase")
     frameworks = build_file_names(objects, frameworks_phase)
