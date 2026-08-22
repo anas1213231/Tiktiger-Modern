@@ -382,7 +382,7 @@ jobs:
           LAUNCH_STATUS=$?
           if [[ "$LAUNCH_STATUS" == '0' ]]; then
             for attempt in $(seq 1 30); do
-              xcrun simctl spawn "$DEVICE_UDID" log show --style compact --last 2m --predicate 'process == "TiktigerHostTest"' > "$HOST_TEST_LOG" 2>&1 || true
+              xcrun simctl spawn "$DEVICE_UDID" log show --style compact --last 10s --predicate 'process == "TiktigerHostTest"' > "$HOST_TEST_LOG" 2>&1 || true
               if grep -q 'TIKTIGER_HOST_TEST_RESULT passed=YES' "$HOST_TEST_LOG"; then
                 break
               fi
