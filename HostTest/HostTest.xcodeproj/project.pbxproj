@@ -23,7 +23,7 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 500000000000000000000001 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 400000000000000000000002;
+			remoteGlobalIDString = 400000000000000000000001;
 			remoteInfo = TiktigerHostTest;
 		};
 /* End PBXContainerItemProxy section */
