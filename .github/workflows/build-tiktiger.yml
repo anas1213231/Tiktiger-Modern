@@ -306,8 +306,8 @@ jobs:
           set -euo pipefail
           rm -rf "$HOST_RUNTIME_DERIVED_DATA"
           xcodebuild \
-            -project "$HOST_PROJECT" \
-            -target TiktigerHostTest \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
             -configuration Debug \
             -sdk iphonesimulator \
             -arch arm64 \
@@ -327,6 +327,19 @@ jobs:
           fi
           cp "$SIMULATOR_DYLIB" HostTest/Tiktiger.dylib
           file HostTest/Tiktiger.dylib
+          rm -rf "$HOST_DERIVED_DATA"
+          xcodebuild \
+            -project "$HOST_PROJECT" \
+            -scheme "$HOST_SCHEME" \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -arch arm64 \
+            -derivedDataPath "$HOST_DERIVED_DATA" \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
 
       - name: Run xcodebuild -list for Host Test
         shell: bash
