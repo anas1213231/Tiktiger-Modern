@@ -381,8 +381,23 @@ jobs:
           rm -f "$HOST_RESULT_FILE"
           set +e
           : > "$HOST_TEST_LOG"
-          xcrun simctl launch "$DEVICE_UDID" com.tiktiger.hosttest > "$HOST_TEST_LOG" 2>&1
-          LAUNCH_STATUS=$?
+          HOST_LAUNCH_LOG="$HOST_TEST_LOG.launch"
+          : > "$HOST_LAUNCH_LOG"
+          xcrun simctl launch "$DEVICE_UDID" com.tiktiger.hosttest > "$HOST_LAUNCH_LOG" 2>&1 &
+          LAUNCH_PID=$!
+          LAUNCH_DEADLINE=$((SECONDS + 30))
+          LAUNCH_STATUS=124
+          while kill -0 "$LAUNCH_PID" >/dev/null 2>&1; do
+            if (( SECONDS >= LAUNCH_DEADLINE )); then
+              kill "$LAUNCH_PID" >/dev/null 2>&1 || true
+              break
+            fi
+            sleep 1
+          done
+          if ! kill -0 "$LAUNCH_PID" >/dev/null 2>&1; then
+            wait "$LAUNCH_PID"
+            LAUNCH_STATUS=$?
+          fi
           if [[ "$LAUNCH_STATUS" == '0' ]]; then
             for attempt in $(seq 1 30); do
               if [[ -f "$HOST_RESULT_FILE" ]]; then
@@ -391,6 +406,9 @@ jobs:
               fi
               sleep 2
             done
+          fi
+          if [[ ! -s "$HOST_TEST_LOG" ]]; then
+            cat "$HOST_LAUNCH_LOG" > "$HOST_TEST_LOG"
           fi
           set -e
           xcrun simctl terminate "$DEVICE_UDID" com.tiktiger.hosttest >/dev/null 2>&1 || true
