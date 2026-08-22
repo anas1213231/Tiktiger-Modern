@@ -1,6 +1,28 @@
 #import "TiktigerHostTestAppDelegate.h"
 #import "TiktigerHostTestRunner.h"
 
+static void TiktigerWriteHostTestResult(BOOL passed,
+                                        NSDictionary *lifecycle,
+                                        NSDictionary *compatibility,
+                                        BOOL binding,
+                                        NSError *lifecycleError,
+                                        NSError *compatibilityError,
+                                        NSError *bindingError) {
+    NSString *marker = [NSString stringWithFormat:@"TIKTIGER_HOST_TEST_RESULT passed=%@ lifecycle=%@ compatibility=%@ binding=%@ errors=%@/%@/%@\n",
+                        passed ? @"YES" : @"NO",
+                        lifecycle ?: @{},
+                        compatibility ?: @{},
+                        binding ? @"YES" : @"NO",
+                        lifecycleError.localizedDescription ?: @"",
+                        compatibilityError.localizedDescription ?: @"",
+                        bindingError.localizedDescription ?: @""];
+    NSString *documents = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+    NSString *resultPath = [documents stringByAppendingPathComponent:@"host-test-result.log"];
+    NSError *writeError = nil;
+    BOOL written = [marker writeToFile:resultPath atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
+    NSLog(@"%@ TIKTIGER_HOST_TEST_RESULT_FILE path=%@ written=%@ error=%@", marker, resultPath, written ? @"YES" : @"NO", writeError.localizedDescription ?: @"");
+}
+
 @implementation TiktigerHostTestAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
@@ -30,7 +52,7 @@
         BOOL binding = bindingPrepared ? [runner validateBindingRoutesAndDiagnostics:&bindingError] : NO;
         NSLog(@"TIKTIGER_HOST_TEST_CHECKPOINT binding-validate-complete binding=%@ error=%@", binding ? @"YES" : @"NO", bindingError);
         BOOL passed = [lifecycle[@"passed"] boolValue] && [compatibility[@"passed"] boolValue] && binding;
-        NSLog(@"TIKTIGER_HOST_TEST_RESULT passed=%@ lifecycle=%@ compatibility=%@ binding=%@ errors=%@/%@/%@", passed ? @"YES" : @"NO", lifecycle, compatibility, binding ? @"YES" : @"NO", lifecycleError.localizedDescription ?: @"", compatibilityError.localizedDescription ?: @"", bindingError.localizedDescription ?: @"");
+        TiktigerWriteHostTestResult(passed, lifecycle, compatibility, binding, lifecycleError, compatibilityError, bindingError);
         NSLog(@"TIKTIGER_HOST_TEST_CHECKPOINT shutdown-start");
         [runner.hostCoordinator shutdownHost:NULL];
         TiktigerShutdown();
