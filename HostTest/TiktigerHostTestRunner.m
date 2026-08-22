@@ -117,7 +117,8 @@ static NSString * const TiktigerHostTestErrorDomain = @"com.tiktiger.host-test";
                                                                           artifactMetadata:nil
                                                                                       error:error];
     BOOL presenting = [start[@"runtimeLifecycleState"] isEqualToString:@"presenting"];
-    NSDictionary *dashboardDescriptor = [start[@"dashboard"] isKindOfClass:[NSDictionary class]] ? start[@"dashboard"] : @{};
+    NSDictionary *dashboardRequest = [start[@"dashboard"] isKindOfClass:[NSDictionary class]] ? start[@"dashboard"] : @{};
+    NSDictionary *dashboardDescriptor = [dashboardRequest[@"dashboard"] isKindOfClass:[NSDictionary class]] ? dashboardRequest[@"dashboard"] : @{};
     BOOL dashboardReady = [dashboardDescriptor[@"surface"] isEqualToString:@"dashboard"] && [dashboardDescriptor[@"state"] isEqualToString:@"ready"];
     NSDictionary *presented = [self.integrationBridge presentRuntimeExperienceForEntry:start hostEvent:@{ @"host": @"controlled-host" } error:error];
     BOOL presentedReady = [presented[@"runtimeLifecycleState"] isEqualToString:@"presented"];
