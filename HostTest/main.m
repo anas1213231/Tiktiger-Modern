@@ -35,8 +35,7 @@ int main(int argc, char *argv[]) {
         NSError *compatibilityError = nil;
         NSDictionary *compatibility = [runner runCompatibilityRecoveryValidation:&compatibilityError];
         NSError *bindingError = nil;
-        BOOL bindingPrepared = [runner prepareWithError:&bindingError];
-        BOOL binding = bindingPrepared ? [runner validateBindingRoutesAndDiagnostics:&bindingError] : NO;
+        BOOL binding = [runner validateBindingRoutesAndDiagnostics:&bindingError];
         BOOL passed = [lifecycle[@"passed"] boolValue] && [compatibility[@"passed"] boolValue] && binding;
         TiktigerWriteHostTestResult(passed, lifecycle, compatibility, binding, lifecycleError, compatibilityError, bindingError);
         [runner.hostCoordinator shutdownHost:NULL];
