@@ -1,7 +1,5 @@
 #import "TiktigerHostTestRunner.h"
-#import "../Features/TiktigerFeatureBootstrap.h"
-#import "../Features/TiktigerModuleManager.h"
-#import "../UIBridge/TiktigerFeatureBindingAdapter.h"
+#import <objc/message.h>
 #import "../UIBridge/TiktigerNavigationContract.h"
 
 static NSString * const TiktigerHostTestErrorDomain = @"com.tiktiger.host-test";
@@ -13,8 +11,8 @@ static NSString * const TiktigerHostTestErrorDomain = @"com.tiktiger.host-test";
 @property (nonatomic, strong, readwrite) TiktigerTikTokIntegrationDiagnostics *diagnostics;
 @property (nonatomic, strong) TiktigerDynamicLibraryLoader *loader;
 @property (nonatomic, strong) TiktigerTikTokCompatibility *compatibility;
-@property (nonatomic, strong) TiktigerFeatureBindingAdapter *binding;
-@property (nonatomic, strong) TiktigerModuleManager *moduleManager;
+@property (nonatomic, strong) id binding;
+@property (nonatomic, strong) id moduleManager;
 @end
 
 @implementation TiktigerHostTestRunner
@@ -22,22 +20,42 @@ static NSString * const TiktigerHostTestErrorDomain = @"com.tiktiger.host-test";
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _loader = [[TiktigerDynamicLibraryLoader alloc] initWithExpectedVersion:@"1.0.0"
-                                                            expectedInstallName:@"@rpath/Tiktiger.dylib"
-                                                               expectedArchitecture:@"arm64"];
-        _hostCoordinator = [[TiktigerHostCoordinator alloc] initWithLoader:_loader];
-        _moduleManager = [[TiktigerModuleManager alloc] init];
-        _diagnostics = [[TiktigerTikTokIntegrationDiagnostics alloc] init];
-        _compatibility = [[TiktigerTikTokCompatibility alloc] initWithApprovedProductIdentifier:@"com.tiktok.ios"
-                                                                                approvedVersions:@[@"40.0.0"]];
+        Class loaderClass = NSClassFromString(@"TiktigerDynamicLibraryLoader");
+        Class coordinatorClass = NSClassFromString(@"TiktigerHostCoordinator");
+        Class moduleManagerClass = NSClassFromString(@"TiktigerModuleManager");
+        Class diagnosticsClass = NSClassFromString(@"TiktigerTikTokIntegrationDiagnostics");
+        Class compatibilityClass = NSClassFromString(@"TiktigerTikTokCompatibility");
+        Class bootstrapClass = NSClassFromString(@"TiktigerFeatureBootstrap");
+        Class bindingClass = NSClassFromString(@"TiktigerFeatureBindingAdapter");
+        Class presentationClass = NSClassFromString(@"TiktigerPresentationBridge");
+        Class bridgeClass = NSClassFromString(@"TiktigerTikTokIntegrationBridge");
+        if (loaderClass == Nil || coordinatorClass == Nil || moduleManagerClass == Nil || diagnosticsClass == Nil || compatibilityClass == Nil || bootstrapClass == Nil || bindingClass == Nil || presentationClass == Nil || bridgeClass == Nil) {
+            return self;
+        }
+
+        id (*LoaderInit)(id, SEL, id, id, id) = (void *)objc_msgSend;
+        id loader = LoaderInit([loaderClass alloc], @selector(initWithExpectedVersion:expectedInstallName:expectedArchitecture:), @"1.0.0", @"@rpath/Tiktiger.dylib", @"arm64");
+        id (*OneArgInit)(id, SEL, id) = (void *)objc_msgSend;
+        id coordinator = OneArgInit([coordinatorClass alloc], @selector(initWithLoader:), loader);
+        id moduleManager = [moduleManagerClass new];
+        id diagnostics = [diagnosticsClass new];
+        id (*CompatibilityInit)(id, SEL, id, id) = (void *)objc_msgSend;
+        id compatibility = CompatibilityInit([compatibilityClass alloc], @selector(initWithApprovedProductIdentifier:approvedVersions:), @"com.tiktok.ios", @[@"40.0.0"]);
         NSError *bootstrapError = nil;
-        [TiktigerFeatureBootstrap registerPriorityModulesIntoManager:_moduleManager error:&bootstrapError];
-        _binding = [[TiktigerFeatureBindingAdapter alloc] initWithModuleManager:_moduleManager];
-        _presentationBridge = [[TiktigerPresentationBridge alloc] initWithBinding:_binding];
-        _integrationBridge = [[TiktigerTikTokIntegrationBridge alloc] initWithHostCoordinator:_hostCoordinator
-                                                                            presentationBridge:_presentationBridge
-                                                                                 compatibility:_compatibility
-                                                                                   diagnostics:_diagnostics];
+        BOOL (*Bootstrap)(id, SEL, id, NSError **) = (void *)objc_msgSend;
+        Bootstrap(bootstrapClass, @selector(registerPriorityModulesIntoManager:error:), moduleManager, &bootstrapError);
+        id binding = OneArgInit([bindingClass alloc], @selector(initWithModuleManager:), moduleManager);
+        id presentation = OneArgInit([presentationClass alloc], @selector(initWithBinding:), binding);
+        id (*BridgeInit)(id, SEL, id, id, id, id) = (void *)objc_msgSend;
+        id bridge = BridgeInit([bridgeClass alloc], @selector(initWithHostCoordinator:presentationBridge:compatibility:diagnostics:), coordinator, presentation, compatibility, diagnostics);
+        _loader = loader;
+        _hostCoordinator = coordinator;
+        _moduleManager = moduleManager;
+        _diagnostics = diagnostics;
+        _compatibility = compatibility;
+        _binding = binding;
+        _presentationBridge = presentation;
+        _integrationBridge = bridge;
         (void)bootstrapError;
     }
     return self;
@@ -79,6 +97,11 @@ static NSString * const TiktigerHostTestErrorDomain = @"com.tiktiger.host-test";
 }
 
 - (BOOL)prepareWithError:(NSError **)error {
+    const char *version = TiktigerGetVersion();
+    if (version == NULL || !TiktigerInitialize()) {
+        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerHostTestErrorDomain code:10 userInfo:@{NSLocalizedDescriptionKey: @"Public Tiktiger runtime initialization failed in HostTest."}]; }
+        return NO;
+    }
     NSDictionary *descriptor = [self.integrationBridge initializeRuntimeWithArtifactMetadata:[self validArtifactMetadata] error:error];
     return [descriptor[@"runtimeLifecycleState"] isEqualToString:@"ready"] && self.hostCoordinator.runtimeState == TiktigerRuntimeStateReady;
 }
@@ -94,8 +117,7 @@ static NSString * const TiktigerHostTestErrorDomain = @"com.tiktiger.host-test";
                                                                           artifactMetadata:nil
                                                                                       error:error];
     BOOL presenting = [start[@"runtimeLifecycleState"] isEqualToString:@"presenting"];
-    NSDictionary *dashboard = start[@"dashboard"];
-    BOOL dashboardReady = [dashboard[@"surface"] isEqualToString:@"dashboard"];
+    BOOL dashboardReady = [start[@"dashboard"][ @"surface"] isEqualToString:@"dashboard"];
     NSDictionary *presented = [self.integrationBridge presentRuntimeExperienceForEntry:start hostEvent:@{ @"host": @"controlled-host" } error:error];
     BOOL presentedReady = [presented[@"runtimeLifecycleState"] isEqualToString:@"presented"];
     NSDictionary *closed = [self.integrationBridge closeRuntimeExperienceWithReason:@"host-test-close" error:error];
@@ -156,7 +178,15 @@ static NSString * const TiktigerHostTestErrorDomain = @"com.tiktiger.host-test";
         if (error != NULL) { *error = [NSError errorWithDomain:TiktigerHostTestErrorDomain code:1 userInfo:@{NSLocalizedDescriptionKey: @"Dashboard presentation contract did not return the dashboard surface."}]; }
         return NO;
     }
-    NSArray<NSString *> *routes = TiktigerSupportedNavigationRoutes();
+    NSArray<NSString *> *routes = @[
+        @"media.download",
+        @"privacy.center",
+        @"appearance.engine",
+        @"chat.center",
+        @"profile.center",
+        @"system.center",
+        @"system.settings"
+    ];
     for (NSString *route in routes) {
         NSError *routeError = nil;
         NSDictionary *descriptor = [self.integrationBridge routeHostEventToRoute:route error:&routeError];
