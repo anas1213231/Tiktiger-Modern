@@ -196,12 +196,13 @@ static NSString * const TiktigerHostTestErrorDomain = @"com.tiktiger.host-test";
             return NO;
         }
     }
-    NSDictionary *health = [self.binding diagnosticsModuleHealth];
+    NSArray *dashboardCards = [self.binding dashboardFeatureCards];
+    NSDictionary *settingsControls = [self.binding settingsFeatureControls];
     NSDictionary *diagnostics = [self.diagnostics snapshot];
-    BOOL bindingReady = self.binding != nil && health.count > 0;
+    BOOL bindingReady = self.binding != nil && dashboardCards.count > 0 && settingsControls.count > 0;
     BOOL diagnosticsReady = [diagnostics[@"runtimeCount"] unsignedIntegerValue] > 0 && [diagnostics[@"compatibilityCount"] unsignedIntegerValue] > 0;
     if (!bindingReady || !diagnosticsReady) {
-        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerHostTestErrorDomain code:3 userInfo:@{NSLocalizedDescriptionKey: @"Feature Binding or integration diagnostics did not expose the expected host-test state."}]; }
+        if (error != NULL) { *error = [NSError errorWithDomain:TiktigerHostTestErrorDomain code:3 userInfo:@{NSLocalizedDescriptionKey: @"Feature Binding status surfaces or integration diagnostics did not expose the expected host-test state."}]; }
         return NO;
     }
     return YES;
