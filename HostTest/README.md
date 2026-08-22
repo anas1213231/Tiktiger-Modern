@@ -22,17 +22,19 @@ From the repository root, build the production Dylib first and copy the resultin
 mkdir -p HostTest
 cp DerivedData/Build/Products/Release-iphoneos/Tiktiger.dylib HostTest/Tiktiger.dylib
 xcodebuild -list -project HostTest/HostTest.xcodeproj
-xcodebuild test \
+xcodebuild build \
   -project HostTest/HostTest.xcodeproj \
-  -scheme TiktigerHostTest \
+  -target TiktigerHostTest \
   -sdk iphonesimulator \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
   -derivedDataPath HostTest/DerivedData \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO
+
+xcrun simctl install <SIMULATOR_UDID> HostTest/DerivedData/Build/Products/Debug-iphonesimulator/TiktigerHostTest.app
+xcrun simctl launch --console <SIMULATOR_UDID> com.tiktiger.hosttest
 ```
 
-The GitHub Actions host-test job performs the same preparation with the current Release Dylib output, selects an available iOS Simulator, runs `xcodebuild test`, and writes `HostTest/host-test-report.md`. A successful host test must report lifecycle, compatibility/recovery, binding/routes/diagnostics, and Dylib checks as passed.
+The GitHub Actions host-test job performs the same preparation with the current Simulator-compatible Dylib output, selects an available iOS Simulator, builds the standalone app target, launches it with `simctl`, and writes `HostTest/host-test-report.md`. The app executes the runner and emits an explicit `TIKTIGER_HOST_TEST_RESULT passed=YES` marker only after lifecycle, compatibility/recovery, binding/routes/diagnostics, and Dylib checks pass.
 
 ## Safety Boundaries
 

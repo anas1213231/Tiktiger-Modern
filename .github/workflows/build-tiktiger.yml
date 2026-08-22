@@ -306,8 +306,8 @@ jobs:
           set -euo pipefail
           rm -rf "$HOST_RUNTIME_DERIVED_DATA"
           xcodebuild \
-            -project "$PROJECT" \
-            -scheme "$SCHEME" \
+            -project "$HOST_PROJECT" \
+            -target TiktigerHostTest \
             -configuration Debug \
             -sdk iphonesimulator \
             -arch arm64 \
@@ -338,29 +338,53 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p HostTest
-          DESTINATION="$(python3 - <<'PY'
+          HOST_APP="$HOST_DERIVED_DATA/Build/Products/Debug-iphonesimulator/TiktigerHostTest.app"
+          HOST_EXECUTABLE="$HOST_APP/TiktigerHostTest"
+          if [[ ! -x "$HOST_EXECUTABLE" ]]; then
+            echo 'VALIDATION_FAILED'
+            echo "path=$HOST_EXECUTABLE"
+            echo 'expected=executable controlled HostTest app'
+            echo 'detected=missing or not executable'
+            exit 1
+          fi
+          DEVICE_UDID="$(python3 - <<'PY'
           import json
           import subprocess
           devices = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "-j"]))
           for runtime_devices in devices.get("devices", {}).values():
               for device in runtime_devices:
                   if device.get("isAvailable") and device.get("state") == "Shutdown" and device.get("name"):
-                      print(f"platform=iOS Simulator,id={device['udid']}")
+                      print(device["udid"])
                       raise SystemExit
           raise SystemExit("No available shutdown iOS Simulator was found")
           PY
           )"
-          echo "Host test destination: $DESTINATION"
-          xcodebuild test \
-            -project "$HOST_PROJECT" \
-            -scheme "$HOST_SCHEME" \
-            -sdk iphonesimulator \
-            -destination "$DESTINATION" \
-            -derivedDataPath "$HOST_DERIVED_DATA" \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" 2>&1 | tee "$HOST_TEST_LOG"
+          echo "Host test simulator: $DEVICE_UDID"
+          xcrun simctl boot "$DEVICE_UDID" || true
+          xcrun simctl bootstatus "$DEVICE_UDID" -b
+          xcrun simctl install "$DEVICE_UDID" "$HOST_APP"
+          set +e
+          xcrun simctl launch --console "$DEVICE_UDID" com.tiktiger.hosttest 2>&1 | tee "$HOST_TEST_LOG"
+          LAUNCH_STATUS=${PIPESTATUS[0]}
+          set -e
+          sleep 2
+          xcrun simctl terminate "$DEVICE_UDID" com.tiktiger.hosttest >/dev/null 2>&1 || true
+          if [[ "$LAUNCH_STATUS" != '0' ]]; then
+            echo 'VALIDATION_FAILED'
+            echo "path=$HOST_TEST_LOG"
+            echo 'expected=HostTest app launch exits successfully'
+            echo "detected=simctl launch exit=$LAUNCH_STATUS"
+            exit 1
+          fi
+          if ! grep -q 'TIKTIGER_HOST_TEST_RESULT passed=YES' "$HOST_TEST_LOG"; then
+            echo 'VALIDATION_FAILED'
+            echo "path=$HOST_TEST_LOG"
+            echo 'expected=TIKTIGER_HOST_TEST_RESULT passed=YES'
+            echo 'detected=pass marker missing or host test failed'
+            tail -n 120 "$HOST_TEST_LOG"
+            exit 1
+          fi
+          echo 'HOST_TEST_RUNTIME_PASS'
 
       - name: Write Host Test Report
         if: always()
@@ -374,6 +398,7 @@ jobs:
             echo "- Commit: $GITHUB_SHA"
             echo "- Host project: $HOST_PROJECT"
             echo "- Host scheme: $HOST_SCHEME"
+            echo '- Host execution: self-running Simulator app with explicit pass marker'
             echo "- Verified release Dylib: ${{ steps.locate.outputs.path }}"
             echo '- Simulator runtime: built from the same Tiktiger source for iphonesimulator compatibility'
             echo
