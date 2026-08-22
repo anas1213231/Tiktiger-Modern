@@ -377,11 +377,29 @@ jobs:
           xcrun simctl bootstatus "$DEVICE_UDID" -b
           xcrun simctl install "$DEVICE_UDID" "$HOST_APP"
           set +e
-          xcrun simctl launch --console "$DEVICE_UDID" com.tiktiger.hosttest 2>&1 | tee "$HOST_TEST_LOG"
-          LAUNCH_STATUS=${PIPESTATUS[0]}
+          : > "$HOST_TEST_LOG"
+          xcrun simctl launch --console "$DEVICE_UDID" com.tiktiger.hosttest > "$HOST_TEST_LOG" 2>&1 &
+          LAUNCH_PID=$!
+          DEADLINE=$((SECONDS + 120))
+          while kill -0 "$LAUNCH_PID" >/dev/null 2>&1; do
+            if (( SECONDS >= DEADLINE )); then
+              echo 'HOST_TEST_TIMEOUT' >> "$HOST_TEST_LOG"
+              xcrun simctl terminate "$DEVICE_UDID" com.tiktiger.hosttest >/dev/null 2>&1 || true
+              kill "$LAUNCH_PID" >/dev/null 2>&1 || true
+              wait "$LAUNCH_PID" >/dev/null 2>&1 || true
+              LAUNCH_STATUS=124
+              break
+            fi
+            sleep 2
+          done
+          if [[ "${LAUNCH_STATUS:-}" != '124' ]]; then
+            wait "$LAUNCH_PID"
+            LAUNCH_STATUS=$?
+          fi
           set -e
           sleep 2
           xcrun simctl terminate "$DEVICE_UDID" com.tiktiger.hosttest >/dev/null 2>&1 || true
+          cat "$HOST_TEST_LOG"
           if [[ "$LAUNCH_STATUS" != '0' ]]; then
             echo 'VALIDATION_FAILED'
             echo "path=$HOST_TEST_LOG"
