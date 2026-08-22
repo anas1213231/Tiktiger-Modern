@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`HostTest` is a controlled, first-party host application and XCTest bundle for validating Tiktiger runtime contracts. It does not modify TikTok, does not link to a third-party application, and does not use the reference IPA.
+`HostTest` is a controlled, first-party host application with an optional XCTest bundle for validating Tiktiger runtime contracts. Its synchronous `main.m` entrypoint runs the host checks directly, writes the result into the app Documents container, and returns a process status. It does not modify TikTok, does not link to a third-party application, and does not use the reference IPA.
 
 The host test loads the verified `Tiktiger.dylib` as an embedded dynamic library in a standalone iOS test application with bundle identifier `com.tiktiger.hosttest`. The source tree intentionally contains no copied Dylib; CI copies the freshly built Dylib artifact into `HostTest/Tiktiger.dylib` only inside the macOS build workspace.
 
@@ -24,17 +24,19 @@ cp DerivedData/Build/Products/Release-iphoneos/Tiktiger.dylib HostTest/Tiktiger.
 xcodebuild -list -project HostTest/HostTest.xcodeproj
 xcodebuild build \
   -project HostTest/HostTest.xcodeproj \
-  -target TiktigerHostTest \
+  -scheme TiktigerHostTest \
   -sdk iphonesimulator \
   -derivedDataPath HostTest/DerivedData \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO
 
 xcrun simctl install <SIMULATOR_UDID> HostTest/DerivedData/Build/Products/Debug-iphonesimulator/TiktigerHostTest.app
-xcrun simctl launch --console <SIMULATOR_UDID> com.tiktiger.hosttest
+xcrun simctl launch <SIMULATOR_UDID> com.tiktiger.hosttest
+
+# CI reads Documents/host-test-result.log from the app data container.
 ```
 
-The GitHub Actions host-test job performs the same preparation with the current Simulator-compatible Dylib output, selects an available iOS Simulator, builds the standalone app target, launches it with `simctl`, and writes `HostTest/host-test-report.md`. The app executes the runner and emits an explicit `TIKTIGER_HOST_TEST_RESULT passed=YES` marker only after lifecycle, compatibility/recovery, binding/routes/diagnostics, and Dylib checks pass.
+The GitHub Actions host-test job performs the same preparation with the current Simulator-compatible Dylib output, selects an available iOS Simulator, builds the standalone app scheme, launches it with `simctl`, and writes `HostTest/host-test-report.md`. The app executes the runner from `main.m`, persists `host-test-result.log` in its data container, and emits an explicit `TIKTIGER_HOST_TEST_RESULT passed=YES` marker only after lifecycle, compatibility/recovery, binding/routes/diagnostics, and Dylib checks pass.
 
 ## Safety Boundaries
 
